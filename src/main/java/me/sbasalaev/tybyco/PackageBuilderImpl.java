@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package me.sbasalaev.tybyco;
+
+import me.sbasalaev.tybyco.builders.PackageBuilder;
+import me.sbasalaev.tybyco.descriptors.JvmClass;
+import org.objectweb.asm.Opcodes;
 
 /**
- * Typesafe generator of Java bytecode.
- * This library allows to programmatically generate JVM class files.
- * It is not as fast and flexible
- * as <a href="https://asm.ow2.io/">Objectweb ASM</a>
- * or <a href="https://commons.apache.org/proper/commons-bcel/">Apache BCEL</a>
- * but instead aims to simplify the creation of class files by automating some
- * of the most routine tasks.
+ *
+ * @author Sergey Basalaev
  */
-module me.sbasalaev.tybyco {
-    requires transitive me.sbasalaev.common;
-    requires org.objectweb.asm;
+final class PackageBuilderImpl
+    extends ClassfileBuilderImpl<PackageBuilder>
+    implements PackageBuilder {
 
-    exports me.sbasalaev.tybyco;
-    exports me.sbasalaev.tybyco.builders;
-    exports me.sbasalaev.tybyco.descriptors;
+    PackageBuilderImpl(Options options, String packageName) {
+        super(options, JvmClass.packageInfo(packageName));
+        cw.visit(
+            options.version().major(),
+            Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE | Opcodes.ACC_SYNTHETIC,
+            className.binaryName(),
+            null,
+            JvmClass.JVM_OBJECT.binaryName(),
+            null
+        );
+    }
+
+    @Override
+    public CompiledClass end() {
+        visitCommon();
+        cw.visitEnd();
+        return new CompiledClass(className, cw.toByteArray());
+    }
 }

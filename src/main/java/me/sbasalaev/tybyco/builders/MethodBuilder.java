@@ -23,6 +23,7 @@
  */
 package me.sbasalaev.tybyco.builders;
 
+import me.sbasalaev.collection.List;
 import me.sbasalaev.collection.Set;
 import me.sbasalaev.tybyco.descriptors.JvmAnnotation;
 import me.sbasalaev.tybyco.descriptors.JvmClassType;
@@ -49,4 +50,16 @@ public interface MethodBuilder<Result>
 
     /** Adds formal parameter to this method and returns a builder to visit its annotations. */
     ParameterBuilder<MethodBuilder<Result>> parameter(Set<Mod> modifiers, String name);
+
+    /**
+     * Builds code for this method or constructor.
+     * 
+     * @param parameterNames
+     *     names of method parameters that will be assigned to local variables.
+     *     Their number must match number of types in the method descriptor.
+     *     The names may not coincide with the ones given in
+     *     {@link #parameter(me.sbasalaev.collection.Set, java.lang.String) parameter()}
+     *     method and may be empty if the corresponding local is to remain anonymous.
+     */
+    CodeBlockBuilder<MethodBuilder<Result>> code(List<String> parameterNames);
 }

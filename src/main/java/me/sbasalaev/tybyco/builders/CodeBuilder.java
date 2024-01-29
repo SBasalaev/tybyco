@@ -21,21 +21,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package me.sbasalaev.tybyco.builders;
 
 /**
- * Typesafe generator of Java bytecode.
- * This library allows to programmatically generate JVM class files.
- * It is not as fast and flexible
- * as <a href="https://asm.ow2.io/">Objectweb ASM</a>
- * or <a href="https://commons.apache.org/proper/commons-bcel/">Apache BCEL</a>
- * but instead aims to simplify the creation of class files by automating some
- * of the most routine tasks.
+ * Builder of the code section of a method or a constructor.
+ * To enter a new code block the {@link #at(me.sbasalaev.tybyco.builders.Target) }
+ * method must be called with a {@link Target} that is already visited by jump.
+ *
+ * @author Sergey Basalaev
  */
-module me.sbasalaev.tybyco {
-    requires transitive me.sbasalaev.common;
-    requires org.objectweb.asm;
+public interface CodeBuilder<Result> {
 
-    exports me.sbasalaev.tybyco;
-    exports me.sbasalaev.tybyco.builders;
-    exports me.sbasalaev.tybyco.descriptors;
+    /**
+     * Marks current position in the code as the target.
+     * If the code block has ended, i.e. one of {@code jump}, {@code return} or
+     * {@code athrow} instructions were called, this method starts a new code
+     * block. In this case the stack is restored to the state it had when any
+     * jump instruction was visited for given target. In particular, if this is
+     * a target for {@code catch} block the stack has a single {@link Throwable}
+     * entry.
+     */
+    CodeBlockBuilder<Result> at(Target target);
+
+    /**
+     * Finishes writing the code and returns the enclosing builder.
+     * This method also closes any unclosed local variables.
+     */
+    Result end();
 }

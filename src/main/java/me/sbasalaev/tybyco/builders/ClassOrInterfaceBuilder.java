@@ -72,4 +72,7 @@ public interface ClassOrInterfaceBuilder<Self extends ClassOrInterfaceBuilder<Se
 
     /** Returns builder for the method of this class. */
     MethodBuilder<Self> method(Set<Mod> modifiers, String name, JvmMethodDescriptor descriptor);
+
+    /** Returns builder of the code for the static class initializer. */
+    CodeBlockBuilder<Self> staticInitializer();
 }

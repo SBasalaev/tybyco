@@ -21,21 +21,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package me.sbasalaev.tybyco;
+
+import org.objectweb.asm.Opcodes;
 
 /**
- * Typesafe generator of Java bytecode.
- * This library allows to programmatically generate JVM class files.
- * It is not as fast and flexible
- * as <a href="https://asm.ow2.io/">Objectweb ASM</a>
- * or <a href="https://commons.apache.org/proper/commons-bcel/">Apache BCEL</a>
- * but instead aims to simplify the creation of class files by automating some
- * of the most routine tasks.
+ * Supported Java versions.
+ *
+ * @author Sergey Basalaev
  */
-module me.sbasalaev.tybyco {
-    requires transitive me.sbasalaev.common;
-    requires org.objectweb.asm;
+public enum JavaVersion {
 
-    exports me.sbasalaev.tybyco;
-    exports me.sbasalaev.tybyco.builders;
-    exports me.sbasalaev.tybyco.descriptors;
+    V11(Opcodes.V11),
+    V12(Opcodes.V12);
+
+    private final int major;
+
+    private JavaVersion(int major) {
+        this.major = major;
+    }
+
+    int major() {
+        return this.major;
+    }
+
+    /** Whether this version is the same or higher than given version. */
+    public boolean atLeast(JavaVersion version) {
+        return this.ordinal() >= version.ordinal();
+    }
+
+    /** Returns the latest supported target Java version. */
+    public static JavaVersion latest() {
+        return V12;
+    }
+
+    /**
+     * Returns the latest target Java version not greater than the current runtime version.
+     * Note, that tybyco is compiled with Java 21 features so the runtime feature
+     * version is at least 21.
+     */
+    public static JavaVersion runtimeCompatible() {
+        return switch (Runtime.version().feature()) {
+            default -> V12;
+        };
+    }
 }

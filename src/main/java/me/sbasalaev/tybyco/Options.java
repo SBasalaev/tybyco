@@ -21,21 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package me.sbasalaev.tybyco;
 
 /**
- * Typesafe generator of Java bytecode.
- * This library allows to programmatically generate JVM class files.
- * It is not as fast and flexible
- * as <a href="https://asm.ow2.io/">Objectweb ASM</a>
- * or <a href="https://commons.apache.org/proper/commons-bcel/">Apache BCEL</a>
- * but instead aims to simplify the creation of class files by automating some
- * of the most routine tasks.
+ * Tybyco options.
+ *
+ * @author Sergey Basalaev
  */
-module me.sbasalaev.tybyco {
-    requires transitive me.sbasalaev.common;
-    requires org.objectweb.asm;
+final class Options {
 
-    exports me.sbasalaev.tybyco;
-    exports me.sbasalaev.tybyco.builders;
-    exports me.sbasalaev.tybyco.descriptors;
+    private final JavaVersion version;
+    private final boolean generateSignatures;
+
+    Options(JavaVersion version, boolean generateSignatures) {
+        this.version = version;
+        this.generateSignatures = generateSignatures;
+    }
+
+    public JavaVersion version() {
+        return version;
+    }
+
+    public static Options getDefault() {
+        return new Options(JavaVersion.runtimeCompatible(), true);
+    }
 }
