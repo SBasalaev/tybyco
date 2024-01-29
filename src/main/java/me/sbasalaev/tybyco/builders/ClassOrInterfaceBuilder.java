@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,34 @@ public interface ClassOrInterfaceBuilder<Self extends ClassOrInterfaceBuilder<Se
 
     /** Adds permitted subclass to this class. */
     Self permittedSubclass(JvmClass className);
+
+    /** Writes the nest host of the class. */
+    Self nestHost(JvmClass nestHost);
+
+    /** Writes the nest member of the class. */
+    Self nestMember(JvmClass nestMember);
+
+    /**
+     * Writes the immediately enclosing class of this class.
+     * This method should be called only if the class being built is local or
+     * anonymous and appears directly in the body of the class, not in a method
+     * or constructor.
+     */
+    Self enclosingClass(JvmClass enclosingClass);
+
+    /**
+     * Writes the immediately enclosing method of this class.
+     * This method should be called only if the class being built is local or
+     * anonymous.
+     */
+    Self enclosingMethod(JvmClass enclosingClass, String name, JvmMethodDescriptor descriptor);
+
+    /**
+     * Writes the immediately enclosing constructor of this class.
+     * This method should be called only if the class being built is local or
+     * anonymous.
+     */
+    Self enclosingConstructor(JvmClass enclosingClass, JvmMethodDescriptor descriptor);
 
     /**
      * Returns a builder for a field of this class.

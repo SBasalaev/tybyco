@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -120,6 +120,43 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
     public Self permittedSubclass(JvmClass className) {
         learnClass(className);
         cw.visitPermittedSubclass(className.binaryName());
+        return self();
+    }
+
+    @Override
+    public Self nestHost(JvmClass nestHost) {
+        learnClass(nestHost);
+        cw.visitNestHost(nestHost.binaryName());
+        return self();
+    }
+
+    @Override
+    public Self nestMember(JvmClass nestMember) {
+        learnClass(nestMember);
+        cw.visitNestMember(nestMember.binaryName());
+        return self();
+    }
+
+    @Override
+    public Self enclosingClass(JvmClass enclosingClass) {
+        learnClass(enclosingClass);
+        cw.visitOuterClass(enclosingClass.binaryName(), null, null);
+        return self();
+    }
+
+    @Override
+    public Self enclosingMethod(JvmClass enclosingClass, String name, JvmMethodDescriptor descriptor) {
+        learnClass(enclosingClass);
+        learnClasses(descriptor);
+        cw.visitOuterClass(enclosingClass.binaryName(), name, descriptor.nonGenericString());
+        return self();
+    }
+
+    @Override
+    public Self enclosingConstructor(JvmClass enclosingClass, JvmMethodDescriptor descriptor) {
+        learnClass(enclosingClass);
+        learnClasses(descriptor);
+        cw.visitOuterClass(enclosingClass.binaryName(), INIT, descriptor.nonGenericString());
         return self();
     }
 
