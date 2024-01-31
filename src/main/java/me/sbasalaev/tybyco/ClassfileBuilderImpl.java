@@ -147,7 +147,7 @@ abstract class ClassfileBuilderImpl<Self extends ClassfileBuilder<Self>>
                 nestedClass.binaryName(),
                 nestedClass.isMember() ? nestedClass.enclosingClass().binaryName() : null,
                 nestedClass.isAnonymous() ? null : nestedClass.simpleName(),
-                Flags.forNestedClass(nestedClass)
+                options.flags().forNestedClass(nestedClass)
             );
         }
     }

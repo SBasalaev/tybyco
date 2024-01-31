@@ -32,8 +32,17 @@ import org.objectweb.asm.Opcodes;
  */
 public enum JavaVersion {
 
+    V7(Opcodes.V1_7),
+    V8(Opcodes.V1_8),
+    V9(Opcodes.V9),
+    V10(Opcodes.V10),
     V11(Opcodes.V11),
-    V12(Opcodes.V12);
+    V12(Opcodes.V12),
+    V13(Opcodes.V13),
+    V14(Opcodes.V14),
+    V15(Opcodes.V15),
+    V16(Opcodes.V16),
+    V17(Opcodes.V17);
 
     private final int major;
 
@@ -57,12 +66,15 @@ public enum JavaVersion {
 
     /**
      * Returns the latest target Java version not greater than the current runtime version.
-     * Note, that tybyco is compiled with Java 21 features so the runtime feature
-     * version is at least 21.
      */
     public static JavaVersion runtimeCompatible() {
         return switch (Runtime.version().feature()) {
-            default -> V12;
+            case 7  -> V7;
+            case 8  -> V8;
+            case 9  -> V9;
+            case 10 -> V10;
+            case 11 -> V11;
+            default -> latest();
         };
     }
 }

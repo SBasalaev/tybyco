@@ -43,7 +43,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <h3>invokespecial and invokeinterface</h3>
  * There are no matching methods for {@code invokespecial} and {@code invokeinterface}
  * instructions. Instead, the correct instruction is selected based on a class
- * reference and the intention:
+ * reference, target Java version and the intention:
  * <ul>
  * <li>
  *   Use
@@ -56,8 +56,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <li>
  *   use
  *   {@link #invokeVirtual(me.sbasalaev.tybyco.descriptors.JvmClass, java.lang.String, me.sbasalaev.tybyco.descriptors.JvmMethodDescriptor) invokeVirtual()}
- *   to call an instance method of a class or interface. This includes {@code private}
- *   methods.
+ *   to call a non-private instance method of a class or interface.
+ * <li>
+ *   use
+ *   {@link #invokePrivate(me.sbasalaev.tybyco.descriptors.JvmClass, java.lang.String, me.sbasalaev.tybyco.descriptors.JvmMethodDescriptor) invokePrivate()}
+ *   to call a private instance method of a class or interface.
  * <li>
  *   use
  *   {@link #invokeSuper(me.sbasalaev.tybyco.descriptors.JvmClass, java.lang.String, me.sbasalaev.tybyco.descriptors.JvmMethodDescriptor) invokeSuper()}
@@ -333,8 +336,11 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
     /** Writes call to a static method of a class or interface. */
     CodeBlockBuilder<Result> invokeStatic(JvmClass owner, String name, JvmMethodDescriptor descriptor);
 
-    /** Writes call to an instance method of a class or interface. */
+    /** Writes call to a non-private instance method of a class or interface. */
     CodeBlockBuilder<Result> invokeVirtual(JvmClass owner, String name, JvmMethodDescriptor descriptor);
+
+    /** Writes call to a private instance method of a superclass or superinterface. */
+    CodeBlockBuilder<Result> invokePrivate(JvmClass owner, String name, JvmMethodDescriptor descriptor);
 
     /** Writes call to an instance method of a superclass or superinterface. */
     CodeBlockBuilder<Result> invokeSuper(JvmClass owner, String name, JvmMethodDescriptor descriptor);

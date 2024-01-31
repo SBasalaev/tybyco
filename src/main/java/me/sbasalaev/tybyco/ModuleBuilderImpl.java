@@ -49,30 +49,32 @@ final class ModuleBuilderImpl
             /* access  = */ Opcodes.ACC_MODULE | (modifiers.contains(Mod.DEPRECATED) ? Opcodes.ACC_DEPRECATED : 0),
             /* name    = */ className.binaryName(),
             null, null, null);
-        mv = cw.visitModule(name, Flags.forModule(modifiers), version);
+        mv = cw.visitModule(name, options.flags().forModule(modifiers), version);
     }
 
     @Override
     public ModuleBuilder requires(Set<Mod> modifiers, String moduleName, String version) {
-        mv.visitRequire(moduleName, Flags.forModuleRequires(modifiers), version);
+        mv.visitRequire(moduleName, options.flags().forModuleRequires(modifiers), version);
         return this;
     }
 
     @Override
     public ModuleBuilder requires(Set<Mod> modifiers, String moduleName) {
-        mv.visitRequire(moduleName, Flags.forModuleRequires(modifiers), null);
+        mv.visitRequire(moduleName, options.flags().forModuleRequires(modifiers), null);
         return this;
     }
 
     @Override
     public ModuleBuilder exports(Set<Mod> modifiers, String packageName, List<String> toModules) {
-        mv.visitExport(packageName, Flags.forModuleExports(modifiers), toModules.isEmpty() ? null : toModules.toArray(String[]::new));
+        mv.visitExport(packageName, options.flags().forModuleExports(modifiers),
+                toModules.isEmpty() ? null : toModules.toArray(String[]::new));
         return this;
     }
 
     @Override
     public ModuleBuilder opens(Set<Mod> modifiers, String packageName, List<String> toModules) {
-        mv.visitOpen(packageName, Flags.forModuleOpens(modifiers), toModules.isEmpty() ? null : toModules.toArray(String[]::new));
+        mv.visitOpen(packageName, options.flags().forModuleOpens(modifiers),
+                toModules.isEmpty() ? null : toModules.toArray(String[]::new));
         return this;
     }
 

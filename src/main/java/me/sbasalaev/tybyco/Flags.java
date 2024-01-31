@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,97 +30,27 @@ import me.sbasalaev.tybyco.descriptors.Mod;
 import static org.objectweb.asm.Opcodes.*;
 
 /**
- * Maps typesafe modifiers to JVM flags.
+ * Maps modifiers to JVM access flags.
  *
  * @author Sergey Basalaev
  */
-final class Flags {
+class Flags {
 
-    private Flags() { }
+    Flags() { }
 
-    private static final Set<Mod> ALLOWED_SYNTH = Set.of(
-            Mod.MANDATED,
-            Mod.SYNTHETIC
-    );
-    private static final Set<Mod> ALLOWED_REQUIRES = Set.of(
-            Mod.MANDATED,
-            Mod.STATIC,
-            Mod.SYNTHETIC,
-            Mod.TRANSITIVE
-    );
-    private static final Set<Mod> ALLOWED_MODULE = Set.of(
-            Mod.DEPRECATED,
-            Mod.MANDATED,
-            Mod.OPEN,
-            Mod.SYNTHETIC
-    );
-    private static final Set<Mod> ALLOWED_INNER_CLASS = Set.of(
-            Mod.ABSTRACT,
-            Mod.FINAL, 
-            Mod.PRIVATE,
-            Mod.PROTECTED,
-            Mod.PUBLIC,
-            Mod.STATIC,
-            Mod.SYNTHETIC
-    );
-    private static final Set<Mod> ALLOWED_CLASS = Set.of(
-            Mod.ABSTRACT,
-            Mod.DEPRECATED,
-            Mod.FINAL, 
-            Mod.PUBLIC, 
-            Mod.SYNTHETIC
-    );
-    private static final Set<Mod> ALLOWED_FIELD = Set.of(
-            Mod.DEPRECATED,
-            Mod.FINAL,
-            Mod.PRIVATE,
-            Mod.PROTECTED,
-            Mod.PUBLIC,
-            Mod.STATIC,
-            Mod.SYNTHETIC,
-            Mod.TRANSIENT,
-            Mod.VOLATILE
-    );
-    private static final Set<Mod> ALLOWED_METHOD = Set.of(
-            Mod.ABSTRACT,
-            Mod.BRIDGE,
-            Mod.FINAL,
-            Mod.NATIVE,
-            Mod.PRIVATE,
-            Mod.PROTECTED,
-            Mod.PUBLIC,
-            Mod.STATIC,
-            Mod.STRICT,
-            Mod.SYNCHRONIZED,
-            Mod.SYNTHETIC,
-            Mod.VARARGS
-    );
-    private static final Set<Mod> ALLOWED_CONSTRUCTOR = Set.of(
-            Mod.PRIVATE,
-            Mod.PROTECTED,
-            Mod.PUBLIC,
-            Mod.STRICT,
-            Mod.SYNTHETIC,
-            Mod.VARARGS
-    );
-    private static final Set<Mod> ALLOWED_PARAMETER = Set.of(
-            Mod.FINAL,
-            Mod.MANDATED,
-            Mod.SYNTHETIC
-    );
-
-    public static int forNestedClass(JvmNestedClass className) {
+    /** Flags for {@code InnerClasses} structure. */
+    public int forNestedClass(JvmNestedClass className) {
         int flags = switch (className.classKind()) {
             case ANNOTATION -> ACC_ANNOTATION | ACC_INTERFACE;
             case ENUM -> ACC_ENUM;
             case INTERFACE -> ACC_INTERFACE;
             default -> 0;
         };
-        flags |= forElement(className.modifiers(), "nested class", ALLOWED_INNER_CLASS);
+        flags |= forClassElement(className.modifiers());
         return flags;
     }
 
-    public static int forClass(JvmClass className, Set<Mod> modifiers) {
+    public int forClass(JvmClass className, Set<Mod> modifiers) {
         int flags = switch (className.classKind()) {
             case ANNOTATION -> ACC_ANNOTATION | ACC_INTERFACE | ACC_ABSTRACT;
             case CLASS -> ACC_SUPER;
@@ -130,30 +60,34 @@ final class Flags {
             case MODULE -> ACC_MODULE;
             case PACKAGE -> ACC_INTERFACE | ACC_ABSTRACT | ACC_SYNTHETIC;
         };
-        flags |= forElement(modifiers, "class", ALLOWED_CLASS);
-        return flags;
+        return flags | forClassElement(modifiers);
     }
 
-    public static int forField(Set<Mod> modifiers) {
-        return forElement(modifiers, "field", ALLOWED_FIELD);
+    public int forClassField(Set<Mod> modifiers) {
+        return forClassElement(modifiers);
     }
 
-    public static int forMethod(Set<Mod> modifiers) {
-        return forElement(modifiers, "method", ALLOWED_METHOD);
+    public int forInterfaceField(Set<Mod> modifiers) {
+        return forClassElement(modifiers);
     }
 
-    public static int forConstructor(Set<Mod> modifiers) {
-        return forElement(modifiers, "constructor", ALLOWED_CONSTRUCTOR);
+    public int forClassMethod(Set<Mod> modifiers) {
+        return forClassElement(modifiers);
     }
 
-    public static int forParameter(Set<Mod> modifiers) {
-        return forElement(modifiers, "parameter", ALLOWED_PARAMETER);
+    public int forInterfaceMethod(Set<Mod> modifiers) {
+        return forClassElement(modifiers);
     }
 
-    private static int forElement(Set<Mod> modifiers, String name, Set<Mod> allowed) {
-        for (var modifier : modifiers.without(allowed)) {
-            invalid(modifier, name);
-        }
+    public int forConstructor(Set<Mod> modifiers) {
+        return forClassElement(modifiers);
+    }
+
+    public int forParameter(Set<Mod> modifiers) {
+        return forClassElement(modifiers);
+    }
+
+    private static int forClassElement(Set<Mod> modifiers) {
         int flags = 0;
         for (var modifier : modifiers) {
             flags |= switch (modifier) {
@@ -173,26 +107,24 @@ final class Flags {
         return flags;
     }
 
-    public static int forModule(Set<Mod> modifiers) {
-        return forModuleElement(modifiers, "module", ALLOWED_MODULE);
+
+    public int forModule(Set<Mod> modifiers) {
+        return forModuleElement(modifiers);
     }
 
-    public static int forModuleRequires(Set<Mod> modifiers) {
-        return forModuleElement(modifiers, "requires", ALLOWED_REQUIRES);
+    public int forModuleRequires(Set<Mod> modifiers) {
+        return forModuleElement(modifiers);
     }
 
-    public static int forModuleExports(Set<Mod> modifiers) {
-        return forModuleElement(modifiers, "exports", ALLOWED_SYNTH);
+    public int forModuleExports(Set<Mod> modifiers) {
+        return forModuleElement(modifiers);
     }
 
-    public static int forModuleOpens(Set<Mod> modifiers) {
-        return forModuleElement(modifiers, "opens", ALLOWED_SYNTH);
+    public int forModuleOpens(Set<Mod> modifiers) {
+        return forModuleElement(modifiers);
     }
 
-    private static int forModuleElement(Set<Mod> modifiers, String name, Set<Mod> allowed) {
-        for (var modifier : modifiers.without(allowed)) {
-            invalid(modifier, name);
-        }
+    private static int forModuleElement(Set<Mod> modifiers) {
         int flags = 0;
         for (var modifier : modifiers) {
             flags |= switch (modifier) {
@@ -205,9 +137,5 @@ final class Flags {
             };
         }
         return flags;
-    }
-
-    private static int invalid(Mod modifier, String elementType) {
-        throw new IllegalArgumentException("Modifier " + modifier + " is not allowed for " + elementType);
     }
 }

@@ -53,7 +53,7 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
 
     ClassBuilderImpl(Options options, Set<Mod> modifiers, JvmClass className) {
         super(options, className);
-        this.access = Flags.forClass(className, modifiers);
+        this.access = options.flags().forClass(className, modifiers);
         // visit here to tell ASM the version, will be visited again at the end
         cw.visit(options.version().major(), access, className.binaryName(), null, null, null);
     }
@@ -163,10 +163,11 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
     @Override
     public FieldBuilder<Self> field(Set<Mod> modifiers, String name, JvmType type) {
         learnClasses(type);
-        var fv = cw.visitField(Flags.forField(modifiers), name,
-            type.nonGenericString(),
-            type.isGeneric() ? type.genericString() : null,
-            null);
+        int flags = className.classKind().isInterface()
+            ? options.flags().forInterfaceField(modifiers)
+            : options.flags().forClassField(modifiers);
+        var fv = cw.visitField(flags, name, type.nonGenericString(),
+            type.isGeneric() ? type.genericString() : null, null);
         return new FieldBuilderImpl<>(this, fv);
     }
 
@@ -197,9 +198,11 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
             case String    __ -> new JvmClassType(JvmClass.JVM_STRING);
             default -> throw new IllegalArgumentException("invalid constant value: " + value);
         };
-        var fv = cw.visitField(
-            Flags.forField(Set.union(modifiers, set(Mod.FINAL, Mod.STATIC))),
-            name, type.nonGenericString(), null, constValue);
+        var constMods = Set.union(modifiers, set(Mod.FINAL, Mod.STATIC));
+        int flags = className.classKind().isInterface()
+            ? options.flags().forInterfaceField(constMods)
+            : options.flags().forClassField(constMods);
+        var fv = cw.visitField(flags, name, type.nonGenericString(), null, constValue);
         return new FieldBuilderImpl<>(this, fv);
     }
 
@@ -209,7 +212,9 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
             case INIT -> throw new IllegalArgumentException("use constructor() to visit constructors");
             case CLINIT -> throw new IllegalArgumentException("use staticInitializer() to visit static initilializers");
         }
-        int flags = Flags.forMethod(modifiers);
+        int flags = className.classKind().isInterface()
+            ? options.flags().forInterfaceMethod(modifiers)
+            : options.flags().forClassMethod(modifiers);
         var mv = cw.visitMethod(flags, name, descriptor.nonGenericString(), null, null);
         boolean isStatic = modifiers.contains(Mod.STATIC);
         return new MethodBuilderImpl<>(this, descriptor, false, isStatic, mv);
@@ -217,7 +222,7 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
 
     @Override
     public MethodBuilder<Self> constructor(Set<Mod> modifiers, JvmMethodDescriptor descriptor) {
-        int flags = Flags.forConstructor(modifiers);
+        int flags = options.flags().forConstructor(modifiers);
         var mv = cw.visitMethod(flags, INIT, descriptor.nonGenericString(), null, null);
         boolean isMemberConstructor = className instanceof JvmNestedClass nested
                 && nested.isInstanceMember();

@@ -126,7 +126,7 @@ final class MethodBuilderImpl<Result> implements MethodBuilder<Result> {
     public ParameterBuilder<MethodBuilder<Result>> parameter(Set<Mod> modifiers, String name) {
         int index = parameterCount;
         parameterCount++;
-        mv.visitParameter(name, Flags.forParameter(modifiers));
+        mv.visitParameter(name, classBuilder.options.flags().forParameter(modifiers));
         return new ParameterBuilder<>() {
             @Override
             public ParameterBuilder<MethodBuilder<Result>> annotation(JvmAnnotation anno) {

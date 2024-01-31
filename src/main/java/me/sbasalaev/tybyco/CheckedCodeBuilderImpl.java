@@ -824,6 +824,16 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     }
 
     @Override
+    public CodeBlockBuilder<Result> invokePrivate(JvmClass owner, String name, JvmMethodDescriptor descriptor) {
+        classBuilder.learnClass(owner);
+        classBuilder.learnClasses(descriptor);
+        stackAccept(false, descriptor);
+        mv.visitMethodInsn(classBuilder.options.version().atLeast(JavaVersion.V11) ? INVOKEVIRTUAL : INVOKESPECIAL,
+                owner.binaryName(), name, descriptor.nonGenericString(), owner.classKind().isInterface());
+        return this;
+    }
+
+    @Override
     public CodeBlockBuilder<Result> typeArgumentsForConstructor(List<? extends JvmTypeArgument> typeArguments) {
         return typeArgumentAnnotations(typeArguments, TypeReference.CONSTRUCTOR_INVOCATION_TYPE_ARGUMENT);
     }

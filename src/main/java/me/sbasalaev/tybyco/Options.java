@@ -31,18 +31,28 @@ package me.sbasalaev.tybyco;
 final class Options {
 
     private final JavaVersion version;
-    private final boolean generateSignatures;
+    private final boolean verify;
+    private final Flags flags;
 
-    Options(JavaVersion version, boolean generateSignatures) {
+    Options(JavaVersion version, boolean verify) {
         this.version = version;
-        this.generateSignatures = generateSignatures;
+        this.verify = verify;
+        this.flags = verify ? new CheckedFlags(this) : new Flags();
     }
 
     public JavaVersion version() {
         return version;
     }
 
+    public boolean verify() {
+        return verify;
+    }
+
+    public Flags flags() {
+        return flags;
+    }
+
     public static Options getDefault() {
-        return new Options(JavaVersion.runtimeCompatible(), true);
+        return new Options(JavaVersion.runtimeCompatible(), false);
     }
 }

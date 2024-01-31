@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,17 +39,21 @@ import me.sbasalaev.tybyco.descriptors.Mod;
  */
 public final class Tybyco {
 
-    private final Options options;
+    final Options options;
 
     private Tybyco(Options options) {
         this.options = options;
     }
 
+    /** Builds options for a {@code Tybyco} instance. */
+    public static Tybyco.Builder withOptions() {
+        return new Tybyco.Builder();
+    }
+
     /**
      * Returns a {@code Tybyco} instance with the default settings.
      * The target Java version is the one returned by
-     * {@link JavaVersion#runtimeCompatible() } and all settings are
-     * enabled.
+     * {@link JavaVersion#runtimeCompatible() } and verification is disabled.
      */
     public static Tybyco getDefault() {
         return new Tybyco(Options.getDefault());
@@ -120,5 +124,41 @@ public final class Tybyco {
             throw new IllegalArgumentException(className + " is an interface");
         }
         return new ClassBuilderImpl<>(options, modifiers, className);
+    }
+
+    /** Builder of Tybyco settings. */
+    public static final class Builder {
+
+        private JavaVersion version = JavaVersion.runtimeCompatible();
+        private boolean verify = false;
+
+        private Builder() { }
+
+        /**
+         * Set target Java version.
+         * If not set the default value is the one returned by
+         * {@link JavaVersion#runtimeCompatible() }.
+         */
+        public Builder version(JavaVersion version) {
+            this.version = version;
+            return this;
+        }
+
+        /**
+         * Whether to (partially) verify classes being built.
+         * If not set the default value is {@code false}.
+         */
+        public Builder verify(boolean doVerify) {
+            this.verify = doVerify;
+            return this;
+        }
+
+        /**
+         * Returns {@code Tybyco} instance with given options.
+         * May be called multiple times.
+         */
+        public Tybyco build() {
+            return new Tybyco(new Options(version, verify));
+        }
     }
 }
