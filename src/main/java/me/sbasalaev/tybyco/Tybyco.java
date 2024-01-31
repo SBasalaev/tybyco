@@ -68,6 +68,9 @@ public final class Tybyco {
      * @param version    the version of the module in the format described by {@link ModuleDescriptor.Version }.
      */
     public ModuleBuilder buildModule(Set<Mod> modifiers, String moduleName, String version) {
+        if (!options.version().atLeast(JavaVersion.V9)) {
+            throw new IllegalStateException("Modules require Java version ≥ 9");
+        }
         return new ModuleBuilderImpl(options, modifiers, moduleName, version);
     }
 
@@ -82,6 +85,9 @@ public final class Tybyco {
      *     elements invalid for a module.
      */
     public ModuleBuilder buildModule(Set<Mod> modifiers, String moduleName) {
+        if (!options.version().atLeast(JavaVersion.V9)) {
+            throw new IllegalStateException("Modules require Java version ≥ 9");
+        }
         return new ModuleBuilderImpl(options, modifiers, moduleName, null);
     }
 

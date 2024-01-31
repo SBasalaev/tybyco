@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +30,9 @@ import me.sbasalaev.Require;
 import me.sbasalaev.collection.*;
 import me.sbasalaev.tybyco.builders.*;
 import me.sbasalaev.tybyco.descriptors.*;
-import org.checkerframework.checker.index.qual.Positive;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
 import static org.objectweb.asm.Opcodes.*;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.TypeReference;
+import org.objectweb.asm.*;
+
 
 /**
  * Code builder that verifies some of the instructions.
@@ -46,7 +43,8 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
 
     // TODO: type annotations for CONSTRUCTOR_REFERENCE, METHOD_REFERENCE
     // TODO: invokedynamic
-    // TODO: LDC with method types, method handles, ConstantDynamic
+    // TODO: LDC with ConstantDynamic
+    // TODO: promote to int automatically
 
     private final ClassBuilderImpl<?> classBuilder;
     private final Result result;
@@ -80,7 +78,7 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     private int line = -1;
 
     @Override
-    public CodeBlockBuilder<Result> lineNumber(@Positive int number) {
+    public CodeBlockBuilder<Result> lineNumber(int number) {
         if (number <= 0) throw new IllegalArgumentException("expected positive number");
         if (line != number) {
             line = number;
@@ -783,6 +781,15 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
 
     /* METHODS */
 
+    private int invokeVirtualInsn(JvmClass owner) {
+        return owner.classKind().isInterface() ? INVOKEINTERFACE : INVOKEVIRTUAL;
+    }
+
+    private int invokePrivateInsn(JvmClass owner) {
+        return classBuilder.options.version().atLeast(JavaVersion.V11)
+                ? invokeVirtualInsn(owner) : INVOKESPECIAL;
+    }
+
     @Override
     public CodeBlockBuilder<Result> invokeConstructor(JvmClass owner, JvmMethodDescriptor descriptor) {
         classBuilder.learnClass(owner);
@@ -808,7 +815,7 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
         classBuilder.learnClass(owner);
         classBuilder.learnClasses(descriptor);
         stackAccept(false, descriptor);
-        mv.visitMethodInsn(owner.classKind().isInterface() ? INVOKEINTERFACE : INVOKEVIRTUAL,
+        mv.visitMethodInsn(invokeVirtualInsn(owner),
                 owner.binaryName(), name, descriptor.nonGenericString(), owner.classKind().isInterface());
         return this;
     }
@@ -828,9 +835,7 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
         classBuilder.learnClass(owner);
         classBuilder.learnClasses(descriptor);
         stackAccept(false, descriptor);
-        mv.visitMethodInsn(classBuilder.options.version().atLeast(JavaVersion.V11)
-                ? (owner.classKind().isInterface() ? INVOKEINTERFACE : INVOKEVIRTUAL)
-                : INVOKESPECIAL ,
+        mv.visitMethodInsn(invokePrivateInsn(owner),
                 owner.binaryName(), name, descriptor.nonGenericString(), owner.classKind().isInterface());
         return this;
     }
@@ -1012,7 +1017,7 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     }
 
     @Override
-    public CodeBlockBuilder<Result> push(Object value) {
+    public CodeBlockBuilder<Result> pushConst(Object value) {
         TypeKind kind = switch (value) {
             case null -> {
                 mv.visitInsn(ACONST_NULL);
@@ -1066,10 +1071,57 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
                 mv.visitLdcInsn(Type.getObjectType(className.binaryName()));
                 yield TypeKind.REFERENCE;
             }
+            case JvmMethodDescriptor descriptor -> {
+                classBuilder.learnClasses(descriptor);
+                mv.visitLdcInsn(Type.getMethodType(descriptor.nonGenericString()));
+                yield TypeKind.REFERENCE;
+            }
+            case JvmMethodHandle handle -> {
+                learnHandleClasses(handle);
+                mv.visitLdcInsn(asmHandle(handle));
+                yield TypeKind.REFERENCE;
+            }
             default -> throw new IllegalArgumentException(value.toString());
         };
         stackPush(kind);
         return this;
+    }
+
+    private Handle asmHandle(JvmMethodHandle handle) {
+        boolean isInterface = handle.owner().classKind().isInterface();
+        int tag = switch (handle.kind()) {
+            case INSTANCE_FIELD_GETTER -> H_GETFIELD;
+            case INSTANCE_FIELD_SETTER -> H_PUTFIELD;
+            case STATIC_FIELD_GETTER   -> H_GETSTATIC;
+            case STATIC_FIELD_SETTER   -> H_PUTSTATIC;
+            case CONSTRUCTOR -> H_NEWINVOKESPECIAL;
+            case SUPER_METHOD -> H_INVOKESPECIAL;
+            case STATIC_METHOD -> H_INVOKESTATIC;
+            case VIRTUAL_METHOD -> switch (invokeVirtualInsn(handle.owner())) {
+                case INVOKEVIRTUAL -> H_INVOKEVIRTUAL;
+                case INVOKEINTERFACE -> H_INVOKEINTERFACE;
+                default -> 0;
+            };
+            case PRIVATE_METHOD -> switch (invokePrivateInsn(handle.owner())) {
+                case INVOKEVIRTUAL -> H_INVOKEVIRTUAL;
+                case INVOKEINTERFACE -> H_INVOKEINTERFACE;
+                case INVOKESPECIAL -> H_INVOKESPECIAL;
+                default -> 0;
+            };
+        };
+        return new Handle(tag,
+            handle.owner().binaryName(),
+            handle.name(),
+            handle.descriptor().nonGenericString(),
+            isInterface);
+    }
+
+    private void learnHandleClasses(JvmMethodHandle handle) {
+        classBuilder.learnClass(handle.owner());
+        switch (handle.descriptor()) {
+            case JvmMethodDescriptor md -> classBuilder.learnClasses(md);
+            case JvmTypeOrVoid tv -> classBuilder.learnClasses(tv);
+        }
     }
 
     private void pushInt(int value) {

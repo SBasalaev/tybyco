@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,13 @@
  */
 package me.sbasalaev.tybyco.builders;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import static me.sbasalaev.API.concat;
 import static me.sbasalaev.API.list;
 import me.sbasalaev.collection.List;
 import me.sbasalaev.collection.Map;
 import me.sbasalaev.tybyco.descriptors.*;
-import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -206,13 +207,69 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
 
     /**
      * Writes an instruction that pushes literal value on the stack.
+     * The type of the value depends on the type of the object received.
+     * <table border="1">
+     * <tr>
+     * <th>Given object</th>
+     * <th>Pushed value</th>
+     * </tr>
+     * <tr>
+     * <td>{@code null}</td>
+     * <td>{@code null} reference</td>
+     * </tr>
+     * <tr>
+     * <td>{@link Boolean}</td>
+     * <td>{@code boolean} primitive value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link Byte}</td>
+     * <td>{@code byte} primitive value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link Short}</td>
+     * <td>{@code short} primitive value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link Character}</td>
+     * <td>{@code char} primitive value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link Integer}</td>
+     * <td>{@code int} primitive value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link Long}</td>
+     * <td>{@code long} primitive value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link Float}</td>
+     * <td>{@code float} primitive value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link Double}</td>
+     * <td>{@code double} primitive value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link String}</td>
+     * <td>{@code String} value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link JvmClassOrArray}</td>
+     * <td>{@link Class} value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link JvmMethodDescriptor}</td>
+     * <td>{@link MethodType} value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link JvmHandle}</td>
+     * <td>{@link MethodHandle} value</td>
+     * </tr>
+     * </table>
      *
-     * @param value  the value to be loaded on the stack. Must be one of
-     *     {@code null}, {@link Byte}, {@link Character}, {@link Short},
-     *     {@link Integer}, {@link Long}, {@link Float}, {@link Double},
-     *     {@link String} or {@link JvmClassOrArray}.
+     * @param value  the value to be loaded on the stack.
      */
-    CodeBlockBuilder<Result> push(@Nullable Object value);
+    CodeBlockBuilder<Result> pushConst(@Nullable Object value);
 
     /** Writes an instruction that pops the topmost value from the stack. */
     CodeBlockBuilder<Result> pop();
@@ -303,7 +360,7 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
      * @param dimensions the number of initialized dimensions of the array
      *     being allocated. Must be positive.
      */
-    CodeBlockBuilder<Result> newArray(JvmArrayType arrayType, @Positive int dimensions);
+    CodeBlockBuilder<Result> newArray(JvmArrayType arrayType, int dimensions);
 
     /** Writes appropriate {@code *aload} instruction. */
     CodeBlockBuilder<Result> arrayLoad(JvmType componentType);
@@ -563,5 +620,5 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
      * Marks source line number corresponding to the subsequent instructions.
      * Does nothing if the current line number coincides with given number.
      */
-    CodeBlockBuilder<Result> lineNumber(@Positive int number);
+    CodeBlockBuilder<Result> lineNumber(int number);
 }

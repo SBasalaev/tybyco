@@ -87,6 +87,7 @@ public final class JvmMethodDescriptor extends JvmDescriptor {
     }
 
     /** Binary method descriptor. */
+    @Override
     public String nonGenericString() {
         return "(" + argumentTypes.map(JvmType::nonGenericString).join("") + ")"
             + returnType.nonGenericString();

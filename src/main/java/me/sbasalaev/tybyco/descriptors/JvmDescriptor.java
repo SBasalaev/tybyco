@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,9 @@ public abstract sealed class JvmDescriptor
     public final boolean notGeneric() {
         return !isGeneric();
     }
+
+    /** Binary descriptor of this field or method type. */
+    public abstract String nonGenericString();
 
     /**
      * String representation of this descriptor as would appear in Java source.

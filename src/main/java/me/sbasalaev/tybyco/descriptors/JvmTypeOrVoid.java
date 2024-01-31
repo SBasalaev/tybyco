@@ -96,6 +96,7 @@ public sealed abstract class JvmTypeOrVoid
     public abstract JvmTypeOrVoid erasure();
 
     /** Non-generic binary descriptor of this type. */
+    @Override
     public abstract String nonGenericString();
 
     /** Generic signature of this type. */
