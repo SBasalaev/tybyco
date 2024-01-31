@@ -342,7 +342,7 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
     /** Writes call to a private instance method of a superclass or superinterface. */
     CodeBlockBuilder<Result> invokePrivate(JvmClass owner, String name, JvmMethodDescriptor descriptor);
 
-    /** Writes call to an instance method of a superclass or superinterface. */
+    /** Writes call to an instance method of a superclass or direct superinterface. */
     CodeBlockBuilder<Result> invokeSuper(JvmClass owner, String name, JvmMethodDescriptor descriptor);
 
     /* TYPE ANNOTATIONS WITH NO CLEAR INSTRUCTION TO APPLY */

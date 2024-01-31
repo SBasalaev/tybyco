@@ -828,7 +828,9 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
         classBuilder.learnClass(owner);
         classBuilder.learnClasses(descriptor);
         stackAccept(false, descriptor);
-        mv.visitMethodInsn(classBuilder.options.version().atLeast(JavaVersion.V11) ? INVOKEVIRTUAL : INVOKESPECIAL,
+        mv.visitMethodInsn(classBuilder.options.version().atLeast(JavaVersion.V11)
+                ? (owner.classKind().isInterface() ? INVOKEINTERFACE : INVOKEVIRTUAL)
+                : INVOKESPECIAL ,
                 owner.binaryName(), name, descriptor.nonGenericString(), owner.classKind().isInterface());
         return this;
     }
