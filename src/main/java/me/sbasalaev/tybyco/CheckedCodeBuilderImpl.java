@@ -646,55 +646,52 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     /* CLASSES AND ARRAYS */
 
     @Override
-    public CodeBlockBuilder<Result> newInstanceAndDup(JvmClassType classType) {
-        classBuilder.learnClasses(classType);
+    public CodeBlockBuilder<Result> newInstanceAndDup(JvmClass className) {
+        classBuilder.learnClass(className);
         stackPush(TypeKind.REFERENCE);
         stackPush(TypeKind.REFERENCE);
-        mv.visitTypeInsn(NEW, classType.className().binaryName());
-        if (classType.isDeeplyAnnotated()) {
-            var typeRef = TypeReference.newTypeReference(TypeReference.NEW);
-            Annotations.visitTypeAnnotations(mv::visitInsnAnnotation, typeRef, classType);
-        }
+        mv.visitTypeInsn(NEW, className.binaryName());
         mv.visitInsn(DUP);
         return this;
     }
 
     @Override
-    public CodeBlockBuilder<Result> newArray(JvmArrayType arrayType) {
-        classBuilder.learnClasses(arrayType);
+    public CodeBlockBuilder<Result> newArray(JvmArray arrayClass) {
+        classBuilder.learnClass(arrayClass);
         stackPop(TypeKind.INT);
         stackPush(TypeKind.REFERENCE);
-        switch (arrayType.componentType().kind()) {
-            case BOOLEAN -> mv.visitIntInsn(NEWARRAY, T_BOOLEAN);
-            case BYTE    -> mv.visitIntInsn(NEWARRAY, T_BYTE);
-            case CHAR    -> mv.visitIntInsn(NEWARRAY, T_CHAR);
-            case DOUBLE  -> mv.visitIntInsn(NEWARRAY, T_DOUBLE);
-            case FLOAT   -> mv.visitIntInsn(NEWARRAY, T_FLOAT);
-            case INT     -> mv.visitIntInsn(NEWARRAY, T_INT);
-            case LONG    -> mv.visitIntInsn(NEWARRAY, T_LONG);
-            case SHORT   -> mv.visitIntInsn(NEWARRAY, T_SHORT);
-            case REFERENCE -> {
-                var refType = (JvmReferenceType) arrayType.componentType();
-                mv.visitTypeInsn(ANEWARRAY, refType.className().binaryName());
+        switch (arrayClass) {
+            case JvmPrimitiveArray primArray -> {
+                int atype = switch (primArray.componentType().kind()) {
+                    case BOOLEAN -> T_BOOLEAN;
+                    case BYTE    -> T_BYTE;
+                    case CHAR    -> T_CHAR;
+                    case DOUBLE  -> T_DOUBLE;
+                    case FLOAT   -> T_FLOAT;
+                    case INT     -> T_INT;
+                    case LONG    -> T_LONG;
+                    case SHORT   -> T_SHORT;
+                    case REFERENCE -> throw new IncompatibleClassChangeError();
+                };
+                mv.visitIntInsn(NEWARRAY, atype);
+            }
+            case JvmReferenceArray refArray -> {
+                mv.visitTypeInsn(ANEWARRAY, refArray.componentClass().binaryName());
             }
         }
-        var typeRef = TypeReference.newTypeReference(TypeReference.NEW);
-        Annotations.visitTypeAnnotations(mv::visitInsnAnnotation, typeRef, arrayType);
         return this;
     }
 
     @Override
-    public CodeBlockBuilder<Result> newArray(JvmArrayType arrayType, int dimensions) {
+    public CodeBlockBuilder<Result> newArray(JvmArray arrayClass, int dimensions) {
         Require.argument(dimensions > 0, "dimensions must be positive");
         if (dimensions == 1) {
-            return newArray(arrayType);
+            return newArray(arrayClass);
         }
-        classBuilder.learnClasses(arrayType);
+        classBuilder.learnClass(arrayClass);
         stackPop(List.repeat(TypeKind.INT, dimensions));
         stackPush(TypeKind.REFERENCE);
-        mv.visitMultiANewArrayInsn(arrayType.nonGenericString(), dimensions);
-        var typeRef = TypeReference.newTypeReference(TypeReference.NEW);
-        Annotations.visitTypeAnnotations(mv::visitInsnAnnotation, typeRef, arrayType);
+        mv.visitMultiANewArrayInsn(arrayClass.binaryName(), dimensions);
         return this;
     }
 
@@ -906,40 +903,24 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
                 }
             }
         }
-        if (toType.isDeeplyAnnotated()) {
-            var typeRef = TypeReference.newTypeReference(TypeReference.CAST);
-            Annotations.visitTypeAnnotations(mv::visitInsnAnnotation, typeRef, toType);
-        }
         return this;
     }
 
     @Override
-    public CodeBlockBuilder<Result> instanceOf(JvmClassOrArrayType classType) {
-        classBuilder.learnClasses(classType);
+    public CodeBlockBuilder<Result> instanceOf(JvmClassOrArray className) {
+        classBuilder.learnClass(className);
         stackPop(TypeKind.REFERENCE);
         stackPush(TypeKind.BOOLEAN);
-        mv.visitTypeInsn(INSTANCEOF, classType.className().binaryName());
-        if (classType.isDeeplyAnnotated()) {
-            var typeRef = TypeReference.newTypeReference(TypeReference.INSTANCEOF);
-            Annotations.visitTypeAnnotations(mv::visitInsnAnnotation, typeRef, classType);
-        }
+        mv.visitTypeInsn(INSTANCEOF, className.binaryName());
         return this;
     }
 
     @Override
-    public CodeBlockBuilder<Result> checkCast(List<JvmClassOrArrayType> types) {
+    public CodeBlockBuilder<Result> checkCast(JvmClassOrArray className) {
         stackPop(TypeKind.REFERENCE);
         stackPush(TypeKind.REFERENCE);
-        for (var type : types) {
-            classBuilder.learnClasses(type);
-            mv.visitTypeInsn(CHECKCAST, type.className().binaryName());
-        }
-        if (types.exists(JvmType::isDeeplyAnnotated)) {
-            types.forEachIndexed((type, index) -> {
-                var typeRef = TypeReference.newTypeArgumentReference(TypeReference.CAST, index);
-                Annotations.visitTypeAnnotations(mv::visitInsnAnnotation, typeRef, type);
-            });
-        }
+        classBuilder.learnClass(className);
+        mv.visitTypeInsn(CHECKCAST, className.binaryName());
         return this;
     }
 
@@ -1245,7 +1226,7 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     }
 
     @Override
-    public CodeBlockBuilder<Result> doSwitch(Map<Integer, Target> keyTargets, Target dfltTarget) {
+    public CodeBlockBuilder<Result> jumpSwitch(Map<Integer, Target> keyTargets, Target dfltTarget) {
         checkIsInt(promoteToInt(stackPop()));
         undefinedFrame = true;
 

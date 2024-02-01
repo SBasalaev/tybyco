@@ -25,7 +25,6 @@ package me.sbasalaev.tybyco.builders;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import static me.sbasalaev.API.concat;
 import static me.sbasalaev.API.list;
 import me.sbasalaev.collection.List;
 import me.sbasalaev.collection.Map;
@@ -338,29 +337,26 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
 
     /**
      * Writes instructions to allocate new object and immediately duplicate it.
-     * Also writes type annotations on the type of the {@code new} expression.
      *
      * @param classType type of the allocated object.
      */
-    CodeBlockBuilder<Result> newInstanceAndDup(JvmClassType classType);
+    CodeBlockBuilder<Result> newInstanceAndDup(JvmClass className);
 
     /**
      * Writes an instruction to allocate new array of given type.
-     * Also writes type annotations on the type of {@code new} expression.
      *
-     * @param arrayType the (possibly annotated) type of the allocated array.
+     * @param arrayClass the class of the allocated array.
      */
-    CodeBlockBuilder<Result> newArray(JvmArrayType arrayType);
+    CodeBlockBuilder<Result> newArray(JvmArray arrayClass);
 
     /**
      * Writes an instruction to allocate new array of given type and dimensions.
-     * Also writes type annotations on the type of {@code new} expression.
      *
-     * @param arrayType the (possibly annotated) type of the allocated array.
+     * @param arrayClass the class of the allocated array.
      * @param dimensions the number of initialized dimensions of the array
      *     being allocated. Must be positive.
      */
-    CodeBlockBuilder<Result> newArray(JvmArrayType arrayType, int dimensions);
+    CodeBlockBuilder<Result> newArray(JvmArray arrayClass, int dimensions);
 
     /** Writes appropriate {@code *aload} instruction. */
     CodeBlockBuilder<Result> arrayLoad(JvmType componentType);
@@ -406,7 +402,6 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
 
     /**
      * Writes instructions to convert the number on the stack to given type.
-     * Also writes type annotations on the type of the cast expression.
      * The effect is exactly the same as the corresponding numeric type cast
      * in Java, e.g. if the top of the stack is {@code n} then
      * <pre>numericCast(JvmPrimitiveType.BYTE)</pre>
@@ -421,33 +416,11 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
      */
     CodeBlockBuilder<Result> numericCast(JvmPrimitiveType toType);
 
-    /**
-     * Writes {@code instanceof} instruction.
-     * Also writes type annotations on the type of {@code instanceof} expression.
-     */
-    CodeBlockBuilder<Result> instanceOf(JvmClassOrArrayType classType);
+    /** Writes {@code instanceof} instruction. */
+    CodeBlockBuilder<Result> instanceOf(JvmClassOrArray className);
 
-    /**
-     * Writes {@code checkcast} instruction.
-     * Also writes type annotations on the type of the cast expression.
-     */
-    default CodeBlockBuilder<Result> checkCast(JvmClassOrArrayType classType) {
-        return checkCast(list(classType));
-    }
-
-    /**
-     * Writes one or more {@code checkcast} instructions.
-     * Also writes type annotations on the types of the cast expression.
-     */
-    default CodeBlockBuilder<Result> checkCast(JvmClassOrArrayType classType, JvmClassOrArrayType... interfaceTypes) {
-        return checkCast(concat(list(classType), list(interfaceTypes)));
-    }
-
-    /**
-     * Writes one or more {@code checkcast} instructions.
-     * Also writes type annotations on the types of the cast expression.
-     */
-    CodeBlockBuilder<Result> checkCast(List<JvmClassOrArrayType> types);
+    /** Writes {@code checkcast} instruction. */
+    CodeBlockBuilder<Result> checkCast(JvmClassOrArray className);
 
     /* RETURNING */
 
@@ -528,7 +501,7 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
      * @param keyTargets map from integer keys to target instructions.
      * @param dfltTarget the target if no keys match.
      */
-    CodeBuilder<Result> doSwitch(Map<Integer, Target> keyTargets, Target dfltTarget);
+    CodeBuilder<Result> jumpSwitch(Map<Integer, Target> keyTargets, Target dfltTarget);
 
     /* EXCEPTION HANDLING */
 
