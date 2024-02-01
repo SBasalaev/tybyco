@@ -52,11 +52,11 @@ public final class Tybyco {
 
     /**
      * Returns a {@code Tybyco} instance with the default settings.
-     * The target Java version is the one returned by
-     * {@link JavaVersion#runtimeCompatible() } and verification is disabled.
+     * See the descriptions of {@link Builder} methods for the defaults
+     * for each setting.
      */
     public static Tybyco getDefault() {
-        return new Tybyco(Options.getDefault());
+        return withOptions().build();
     }
 
     /**
@@ -137,12 +137,14 @@ public final class Tybyco {
 
         private JavaVersion version = JavaVersion.runtimeCompatible();
         private boolean verify = false;
+        private boolean writeLocalTables = true;
 
         private Builder() { }
 
         /**
          * Set target Java version.
-         * If not set the default value is the one returned by
+         * <p>
+         * If not set explicitly the default value is the one returned by
          * {@link JavaVersion#runtimeCompatible() }.
          */
         public Builder version(JavaVersion version) {
@@ -152,11 +154,22 @@ public final class Tybyco {
 
         /**
          * Whether to (partially) verify classes being built.
-         * If not set the default value is {@code false}.
+         * <p>
+         * If not set explicitly the default value is {@code false}.
          */
-        public Builder verify(boolean doVerify) {
-            this.verify = doVerify;
+        public Builder verify(boolean value) {
+            this.verify = value;
             return this;
+        }
+
+        /**
+         * Whether to generate {@code LocalVariableTable} and {@code LocalVariableTypeTable}.
+         * These tables provide information about local variables to debuggers.
+         * <p>
+         * If not set explicitly the default value is {@code true}.
+         */
+        public void writeLocalTables(boolean value) {
+            this.writeLocalTables = value;
         }
 
         /**
@@ -164,7 +177,7 @@ public final class Tybyco {
          * May be called multiple times.
          */
         public Tybyco build() {
-            return new Tybyco(new Options(version, verify));
+            return new Tybyco(new Options(version, verify, writeLocalTables));
         }
     }
 }

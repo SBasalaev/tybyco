@@ -32,6 +32,7 @@ import me.sbasalaev.tybyco.builders.*;
 import me.sbasalaev.tybyco.descriptors.*;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.*;
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * Code builder that verifies some of the instructions.
@@ -284,6 +285,9 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
             slot.ends.add(end);
         }
         if (slot.local.isAnonymous()) {
+            return;
+        }
+        if (!classBuilder.options.writeLocalTables()) {
             return;
         }
         int count = slot.starts.size();

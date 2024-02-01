@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,10 +33,14 @@ final class Options {
     private final JavaVersion version;
     private final boolean verify;
     private final Flags flags;
+    private final boolean writeLocalTables;
 
-    Options(JavaVersion version, boolean verify) {
+    Options(JavaVersion version,
+            boolean verify,
+            boolean writeLocalTables) {
         this.version = version;
         this.verify = verify;
+        this.writeLocalTables = writeLocalTables;
         this.flags = verify ? new CheckedFlags(this) : new Flags();
     }
 
@@ -48,11 +52,11 @@ final class Options {
         return verify;
     }
 
-    public Flags flags() {
-        return flags;
+    public boolean writeLocalTables() {
+        return writeLocalTables;
     }
 
-    public static Options getDefault() {
-        return new Options(JavaVersion.runtimeCompatible(), false);
+    public Flags flags() {
+        return flags;
     }
 }
