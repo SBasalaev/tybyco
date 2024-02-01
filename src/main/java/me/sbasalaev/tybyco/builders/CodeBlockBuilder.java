@@ -402,41 +402,6 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
     /** Writes call to an instance method of a superclass or direct superinterface. */
     CodeBlockBuilder<Result> invokeSuper(JvmClass owner, String name, JvmMethodDescriptor descriptor);
 
-    /* TYPE ANNOTATIONS WITH NO CLEAR INSTRUCTION TO APPLY */
-
-    /**
-     * Writes annotations for type arguments of a constructor invocation expression.
-     * This method call should follow the first instruction that denotes the expression.
-     *
-     * @param typeArguments type arguments to the expression. Must not be wildcards.
-     */
-    CodeBlockBuilder<Result> typeArgumentsForConstructor(List<? extends JvmTypeArgument> typeArguments);
-
-    /**
-     * Writes annotations for type arguments of a method invocation expression.
-     * This method call should follow the first instruction that denotes the expression.
-     *
-     * @param typeArguments type arguments to the expression. Must not be wildcards.
-     */
-    CodeBlockBuilder<Result> typeArgumentsForMethod(List<? extends JvmTypeArgument> typeArguments);
-
-    /**
-     * Writes annotations for type arguments of a constructor reference expression.
-     * This method call should follow the first instruction that denotes the expression.
-     *
-     * @param typeArguments type arguments to the expression. Must not be wildcards.
-     */
-    CodeBlockBuilder<Result> typeArgumentsForMethodReference(List<? extends JvmTypeArgument> typeArguments);
-
-
-    /**
-     * Writes annotations for type arguments of a method reference expression.
-     * This method call should follow the first instruction that denotes the expression.
-     *
-     * @param typeArguments type arguments to the expression. Must not be wildcards.
-     */
-    CodeBlockBuilder<Result> typeArgumentsForConstructorReference(List<? extends JvmTypeArgument> typeArguments);
-
     /* TYPE CASTS */
 
     /**

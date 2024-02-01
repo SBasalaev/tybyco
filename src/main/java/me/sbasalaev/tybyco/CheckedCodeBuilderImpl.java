@@ -33,7 +33,6 @@ import me.sbasalaev.tybyco.descriptors.*;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.*;
 
-
 /**
  * Code builder that verifies some of the instructions.
  *
@@ -41,7 +40,9 @@ import org.objectweb.asm.*;
  */
 final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
 
-    // TODO: type annotations for CONSTRUCTOR_REFERENCE, METHOD_REFERENCE
+    // TODO: How to conveniently put type annotations on instructions? The ASM's
+    //       "after the instruction" is unusable when the instruction corresponding
+    //       to the start of the expression is arbitrary.
     // TODO: invokedynamic
     // TODO: LDC with ConstantDynamic
     // TODO: promote to int automatically
@@ -837,37 +838,6 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
         stackAccept(false, descriptor);
         mv.visitMethodInsn(invokePrivateInsn(owner),
                 owner.binaryName(), name, descriptor.nonGenericString(), owner.classKind().isInterface());
-        return this;
-    }
-
-    @Override
-    public CodeBlockBuilder<Result> typeArgumentsForConstructor(List<? extends JvmTypeArgument> typeArguments) {
-        return typeArgumentAnnotations(typeArguments, TypeReference.CONSTRUCTOR_INVOCATION_TYPE_ARGUMENT);
-    }
-
-    @Override
-    public CodeBlockBuilder<Result> typeArgumentsForMethod(List<? extends JvmTypeArgument> typeArguments) {
-        return typeArgumentAnnotations(typeArguments, TypeReference.METHOD_INVOCATION_TYPE_ARGUMENT);
-    }
-
-    @Override
-    public CodeBlockBuilder<Result> typeArgumentsForConstructorReference(List<? extends JvmTypeArgument> typeArguments) {
-        return typeArgumentAnnotations(typeArguments, TypeReference.CONSTRUCTOR_REFERENCE_TYPE_ARGUMENT);
-    }
-
-    @Override
-    public CodeBlockBuilder<Result> typeArgumentsForMethodReference(List<? extends JvmTypeArgument> typeArguments) {
-        return typeArgumentAnnotations(typeArguments, TypeReference.METHOD_REFERENCE_TYPE_ARGUMENT);
-    }
-
-    private CodeBlockBuilder<Result> typeArgumentAnnotations(List<? extends JvmTypeArgument> typeArguments, int sort) {
-        typeArguments.forEachIndexed((type, index) -> {
-            if (type instanceof JvmWildcard) {
-                throw new IllegalArgumentException("Wildcards are not allowed in this context.");
-            }
-            var typeRef = TypeReference.newTypeArgumentReference(sort, index);
-            Annotations.visitTypeAnnotations(mv::visitInsnAnnotation, typeRef, type);
-        });
         return this;
     }
 
