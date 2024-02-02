@@ -32,7 +32,6 @@ import me.sbasalaev.tybyco.builders.*;
 import me.sbasalaev.tybyco.descriptors.*;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.*;
-import static org.objectweb.asm.Opcodes.*;
 
 /**
  * Code builder that verifies some of the instructions.
@@ -44,9 +43,7 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     // TODO: How to conveniently put type annotations on instructions? The ASM's
     //       "after the instruction" is unusable when the instruction corresponding
     //       to the start of the expression is arbitrary.
-    // TODO: invokedynamic
     // TODO: LDC with ConstantDynamic
-    // TODO: promote to int automatically
 
     private final ClassBuilderImpl<?> classBuilder;
     private final Result result;
@@ -89,6 +86,18 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
             mv.visitLineNumber(number, label);
         }
         return this;
+    }
+
+    /* Frames. */
+
+    private final MutableMap<Target, Label> targetLabels = MutableMap.empty();
+    private final MutableMap<Target, List<TypeKind>> targetStacks = MutableMap.empty();
+    private boolean undefinedFrame = false;
+
+    private void checkReachable() {
+        if (undefinedFrame) {
+            throw new IllegalStateException("Unreachable instruction");
+        }
     }
 
     /* Locals. */
@@ -315,15 +324,6 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     /* Stack. */
 
     private final MutableList<TypeKind> stack = MutableList.empty();
-    private final MutableMap<Target, Label> targetLabels = MutableMap.empty();
-    private final MutableMap<Target, List<TypeKind>> targetStacks = MutableMap.empty();
-    private boolean undefinedFrame = false;
-
-    private void checkReachable() {
-        if (undefinedFrame) {
-            throw new IllegalStateException("Unreachable instruction");
-        }
-    }
 
     /** Marks that value of given kind is pushed on stack. */
     private void stackPush(TypeKind slotType) {
@@ -331,8 +331,18 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
         stack.add(slotType);
     }
 
-    private void compareStacks(List<TypeKind> expected, List<TypeKind> actual) {
-        if (!expected.equals(actual)) {
+    /** Whether we can assign from given kind to given kind. */
+    private static boolean isAssignable(TypeKind from, TypeKind to) {
+        if (from == to) return true;
+        return switch (to) {
+            case CHAR, SHORT -> from == TypeKind.BYTE;
+            case INT -> from == TypeKind.BYTE || from == TypeKind.SHORT || from == TypeKind.CHAR;
+            default -> false;
+        };
+    }
+
+    private static void compareStacks(List<TypeKind> expected, List<TypeKind> actual) {
+        if (expected.size() != actual.size() || actual.zip(expected, CheckedCodeBuilderImpl::isAssignable).exists(b -> b == false)) {
             throw new IllegalStateException("Trying to pop " + expected + " but the stack has " + actual);
         }
     }
@@ -411,9 +421,13 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     }
 
     private static void checkSameNumber(TypeKind lhs, TypeKind rhs) {
-        if (lhs != rhs || lhs == TypeKind.BOOLEAN || lhs == TypeKind.REFERENCE) {
-            throw new IllegalStateException("Trying to pop two numbers of the same type but the stack has {" + lhs + ", " + rhs + "}");
+        if (lhs == rhs && lhs != TypeKind.BOOLEAN && lhs != TypeKind.REFERENCE) {
+            return;
         }
+        if (isAssignable(lhs, TypeKind.INT) && isAssignable(rhs, TypeKind.INT)) {
+            return;
+        }
+        throw new IllegalStateException("Trying to pop two numbers of the same type but the stack has {" + lhs + ", " + rhs + "}");
     }
 
     private static void checkIsNumber(TypeKind type) {
@@ -423,20 +437,20 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
     }
 
     private static void checkIsInt(TypeKind type) {
-        if (type != TypeKind.INT) {
+        if (!isAssignable(type, TypeKind.INT)) {
             throw new IllegalStateException("Trying to pop an integer number but the stack has {" + type + "}");
         }
     }
 
     private static void checkIsIntOrLong(TypeKind type) {
-        if (type != TypeKind.INT && type != TypeKind.LONG) {
+        if (!isAssignable(type, TypeKind.INT) && type != TypeKind.LONG) {
             throw new IllegalStateException("Trying to pop an integer number but the stack has {" + type + "}");
         }
     }
 
     @Override
     public CodeBlockBuilder<Result> add() {
-        TypeKind rhs = promoteToInt(stackPop());
+        TypeKind rhs = stackPop();
         TypeKind lhs = promoteToInt(stackPop());
         checkSameNumber(lhs, rhs);
         stackPush(lhs);
