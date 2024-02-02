@@ -856,6 +856,89 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
         return this;
     }
 
+    @Override
+    public CodeBlockBuilder<Result> invokeDynamic(String name, JvmMethodDescriptor descriptor, JvmBootstrapMethod bootstrap) {
+        classBuilder.learnClasses(descriptor);
+        mv.visitInvokeDynamicInsn(name, descriptor.nonGenericString(),
+                asmHandle(bootstrap.handle()),
+                bootstrap.arguments().map(this::asmConstant).toArray());
+        return this;
+    }
+
+    /** Converts tybyco method handle into ASM method handle. */
+    private Handle asmHandle(JvmMethodHandle handle) {
+        classBuilder.learnClass(handle.owner());
+        switch (handle.descriptor()) {
+            case JvmMethodDescriptor md -> classBuilder.learnClasses(md);
+            case JvmTypeOrVoid tv -> classBuilder.learnClasses(tv);
+        }
+        boolean isInterface = handle.owner().classKind().isInterface();
+        int tag = switch (handle.kind()) {
+            case INSTANCE_FIELD_GETTER -> H_GETFIELD;
+            case INSTANCE_FIELD_SETTER -> H_PUTFIELD;
+            case STATIC_FIELD_GETTER   -> H_GETSTATIC;
+            case STATIC_FIELD_SETTER   -> H_PUTSTATIC;
+            case CONSTRUCTOR -> H_NEWINVOKESPECIAL;
+            case SUPER_METHOD -> H_INVOKESPECIAL;
+            case STATIC_METHOD -> H_INVOKESTATIC;
+            case VIRTUAL_METHOD -> switch (invokeVirtualInsn(handle.owner())) {
+                case INVOKEVIRTUAL -> H_INVOKEVIRTUAL;
+                case INVOKEINTERFACE -> H_INVOKEINTERFACE;
+                default -> 0;
+            };
+            case PRIVATE_METHOD -> switch (invokePrivateInsn(handle.owner())) {
+                case INVOKEVIRTUAL -> H_INVOKEVIRTUAL;
+                case INVOKEINTERFACE -> H_INVOKEINTERFACE;
+                case INVOKESPECIAL -> H_INVOKESPECIAL;
+                default -> 0;
+            };
+        };
+        return new Handle(tag,
+            handle.owner().binaryName(),
+            handle.name(),
+            handle.descriptor().nonGenericString(),
+            isInterface);
+    }
+
+    private ConstantDynamic asmDynamicConstant(JvmDynamicConstant cnst) {
+        if (!classBuilder.options.version().atLeast(JavaVersion.V11)) {
+            throw new IllegalArgumentException("Dynamic constants are only supported in Java ≥ 11");
+        }
+        classBuilder.learnClasses(cnst.type());
+        return new ConstantDynamic(
+            cnst.name(),
+            cnst.type().nonGenericString(),
+            asmHandle(cnst.bootstrap().handle()),
+            cnst.bootstrap().arguments().map(this::asmConstant).toArray()
+        );
+    }
+
+    /** Converts tybyco constant argument into ASM constant. */
+    private Object asmConstant(Object cnst) {
+        return switch (cnst) {
+            case Boolean b   -> b ? 1 : 0;
+            case Byte b      -> (int) b;
+            case Character c -> (int) c;
+            case Short s     -> (int) s;
+            case Integer i   -> i;
+            case Long l      -> l;
+            case Float f     -> f;
+            case Double d    -> d;
+            case String s    -> s;
+            case JvmClassOrArray className -> {
+                classBuilder.learnClass(className);
+                yield Type.getObjectType(className.binaryName());
+            }
+            case JvmMethodDescriptor descriptor -> {
+                classBuilder.learnClasses(descriptor);
+                yield Type.getMethodType(descriptor.nonGenericString());
+            }
+            case JvmMethodHandle h -> asmHandle(h);
+            case JvmDynamicConstant c -> asmDynamicConstant(c);
+            default -> throw new IllegalArgumentException(cnst.toString());
+        };
+    }
+
     /* TYPE CASTS */
 
     @Override
@@ -1046,51 +1129,17 @@ final class CheckedCodeBuilderImpl<Result> implements CodeBlockBuilder<Result> {
                 yield TypeKind.REFERENCE;
             }
             case JvmMethodHandle handle -> {
-                learnHandleClasses(handle);
                 mv.visitLdcInsn(asmHandle(handle));
                 yield TypeKind.REFERENCE;
+            }
+            case JvmDynamicConstant cnst -> {
+                mv.visitLdcInsn(asmDynamicConstant(cnst));
+                yield cnst.type().kind();
             }
             default -> throw new IllegalArgumentException(value.toString());
         };
         stackPush(kind);
         return this;
-    }
-
-    private Handle asmHandle(JvmMethodHandle handle) {
-        boolean isInterface = handle.owner().classKind().isInterface();
-        int tag = switch (handle.kind()) {
-            case INSTANCE_FIELD_GETTER -> H_GETFIELD;
-            case INSTANCE_FIELD_SETTER -> H_PUTFIELD;
-            case STATIC_FIELD_GETTER   -> H_GETSTATIC;
-            case STATIC_FIELD_SETTER   -> H_PUTSTATIC;
-            case CONSTRUCTOR -> H_NEWINVOKESPECIAL;
-            case SUPER_METHOD -> H_INVOKESPECIAL;
-            case STATIC_METHOD -> H_INVOKESTATIC;
-            case VIRTUAL_METHOD -> switch (invokeVirtualInsn(handle.owner())) {
-                case INVOKEVIRTUAL -> H_INVOKEVIRTUAL;
-                case INVOKEINTERFACE -> H_INVOKEINTERFACE;
-                default -> 0;
-            };
-            case PRIVATE_METHOD -> switch (invokePrivateInsn(handle.owner())) {
-                case INVOKEVIRTUAL -> H_INVOKEVIRTUAL;
-                case INVOKEINTERFACE -> H_INVOKEINTERFACE;
-                case INVOKESPECIAL -> H_INVOKESPECIAL;
-                default -> 0;
-            };
-        };
-        return new Handle(tag,
-            handle.owner().binaryName(),
-            handle.name(),
-            handle.descriptor().nonGenericString(),
-            isInterface);
-    }
-
-    private void learnHandleClasses(JvmMethodHandle handle) {
-        classBuilder.learnClass(handle.owner());
-        switch (handle.descriptor()) {
-            case JvmMethodDescriptor md -> classBuilder.learnClasses(md);
-            case JvmTypeOrVoid tv -> classBuilder.learnClasses(tv);
-        }
     }
 
     private void pushInt(int value) {

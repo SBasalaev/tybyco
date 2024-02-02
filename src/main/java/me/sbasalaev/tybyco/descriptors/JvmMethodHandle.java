@@ -25,6 +25,7 @@ package me.sbasalaev.tybyco.descriptors;
 
 import java.util.Objects;
 import me.sbasalaev.tybyco.builders.CodeBlockBuilder;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Reference to a method, constructor, field getter or setter.
@@ -145,7 +146,7 @@ public final class JvmMethodHandle {
 
     /** Whether given object equals this handle. */
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (this == obj) return true;
         return obj instanceof JvmMethodHandle handle
             && this.kind == handle.kind

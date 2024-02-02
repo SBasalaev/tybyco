@@ -261,8 +261,12 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
      * <td>{@link MethodType} value</td>
      * </tr>
      * <tr>
-     * <td>{@link JvmHandle}</td>
+     * <td>{@link JvmMethodHandle}</td>
      * <td>{@link MethodHandle} value</td>
+     * </tr>
+     * <tr>
+     * <td>{@link JvmDynamicConstant}</td>
+     * <td>dynamically computed constant</td>
      * </tr>
      * </table>
      *
@@ -397,6 +401,16 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
 
     /** Writes call to an instance method of a superclass or direct superinterface. */
     CodeBlockBuilder<Result> invokeSuper(JvmClass owner, String name, JvmMethodDescriptor descriptor);
+
+    /**
+     * Writes {@code invokedynamic} instruction.
+     *
+     * @param name name of the dynamically initialized method.
+     * @param descriptor descriptor of the dynamically initialized method.
+     * @param bootstrap the bootstrap method that provides the implementation
+     *     for the dynamically initialized method.
+     */
+    CodeBlockBuilder<Result> invokeDynamic(String name, JvmMethodDescriptor descriptor, JvmBootstrapMethod bootstrap);
 
     /* TYPE CASTS */
 
