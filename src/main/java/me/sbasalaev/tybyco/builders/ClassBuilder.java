@@ -23,7 +23,8 @@
  */
 package me.sbasalaev.tybyco.builders;
 
-import me.sbasalaev.collection.Set;
+import static me.sbasalaev.API.list;
+import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.descriptors.JvmClassType;
 import me.sbasalaev.tybyco.descriptors.JvmMethodDescriptor;
 import me.sbasalaev.tybyco.descriptors.Mod;
@@ -40,5 +41,10 @@ public interface ClassBuilder<Self extends ClassBuilder<Self>>
     Self superClass(JvmClassType classType);
 
     /** Returns builder for the constructor of this class. */
-    MethodBuilder<Self> constructor(Set<Mod> modifiers, JvmMethodDescriptor descriptor);
+    MethodBuilder<Self> constructor(JvmMethodDescriptor descriptor, Traversable<Mod> modifiers);
+
+    /** Returns builder for the constructor of this class. */
+    default MethodBuilder<Self> constructor(JvmMethodDescriptor descriptor, Mod... modifiers) {
+        return constructor(descriptor, list(modifiers));
+    }
 }

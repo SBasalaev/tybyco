@@ -23,12 +23,13 @@
  */
 package me.sbasalaev.tybyco;
 
+import static me.sbasalaev.API.list;
+import me.sbasalaev.Opt;
 import me.sbasalaev.collection.List;
-import me.sbasalaev.collection.Set;
+import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.builders.ModuleBuilder;
 import me.sbasalaev.tybyco.descriptors.JvmClass;
 import me.sbasalaev.tybyco.descriptors.Mod;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -42,38 +43,32 @@ final class ModuleBuilderImpl
 
     private final ModuleVisitor mv;
 
-    ModuleBuilderImpl(Options options, Set<Mod> modifiers, String name, @Nullable String version) {
+    ModuleBuilderImpl(Options options, Traversable<Mod> modifiers, String name, Opt<String> version) {
         super(options, JvmClass.MODULE_INFO);
         cw.visit(
             /* version = */ options.version().major(),
-            /* access  = */ Opcodes.ACC_MODULE | (modifiers.contains(Mod.DEPRECATED) ? Opcodes.ACC_DEPRECATED : 0),
+            /* access  = */ Opcodes.ACC_MODULE | (modifiers.exists(Mod.DEPRECATED::equals) ? Opcodes.ACC_DEPRECATED : 0),
             /* name    = */ className.binaryName(),
             null, null, null);
-        mv = cw.visitModule(name, options.flags().forModule(modifiers), version);
+        mv = cw.visitModule(name, options.flags().forModule(modifiers), version.orElseNull());
     }
 
     @Override
-    public ModuleBuilder requires(Set<Mod> modifiers, String moduleName, String version) {
-        mv.visitRequire(moduleName, options.flags().forModuleRequires(modifiers), version);
+    public ModuleBuilder requires(String moduleName, Opt<String> version, Traversable<Mod> modifiers) {
+        mv.visitRequire(moduleName, options.flags().forModuleRequires(modifiers), version.orElseNull());
         return this;
     }
 
     @Override
-    public ModuleBuilder requires(Set<Mod> modifiers, String moduleName) {
-        mv.visitRequire(moduleName, options.flags().forModuleRequires(modifiers), null);
-        return this;
-    }
-
-    @Override
-    public ModuleBuilder exports(Set<Mod> modifiers, String packageName, List<String> toModules) {
-        mv.visitExport(packageName, options.flags().forModuleExports(modifiers),
+    public ModuleBuilder exports(String packageName, List<String> toModules, Mod... modifiers) {
+        mv.visitExport(packageName, options.flags().forModuleExports(list(modifiers)),
                 toModules.isEmpty() ? null : toModules.toArray(String[]::new));
         return this;
     }
 
     @Override
-    public ModuleBuilder opens(Set<Mod> modifiers, String packageName, List<String> toModules) {
-        mv.visitOpen(packageName, options.flags().forModuleOpens(modifiers),
+    public ModuleBuilder opens(String packageName, List<String> toModules, Mod... modifiers) {
+        mv.visitOpen(packageName, options.flags().forModuleOpens(list(modifiers)),
                 toModules.isEmpty() ? null : toModules.toArray(String[]::new));
         return this;
     }

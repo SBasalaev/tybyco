@@ -23,7 +23,7 @@
  */
 package me.sbasalaev.tybyco;
 
-import me.sbasalaev.collection.Set;
+import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.descriptors.JvmClass;
 import me.sbasalaev.tybyco.descriptors.JvmNestedClass;
 import me.sbasalaev.tybyco.descriptors.Mod;
@@ -50,7 +50,7 @@ class Flags {
         return flags;
     }
 
-    public int forClass(JvmClass className, Set<Mod> modifiers) {
+    public int forClass(JvmClass className, Traversable<Mod> modifiers) {
         int flags = switch (className.classKind()) {
             case ANNOTATION -> ACC_ANNOTATION | ACC_INTERFACE | ACC_ABSTRACT;
             case CLASS -> ACC_SUPER;
@@ -63,31 +63,31 @@ class Flags {
         return flags | forClassElement(modifiers);
     }
 
-    public int forClassField(Set<Mod> modifiers) {
+    public int forClassField(Traversable<Mod> modifiers) {
         return forClassElement(modifiers);
     }
 
-    public int forInterfaceField(Set<Mod> modifiers) {
+    public int forInterfaceField(Traversable<Mod> modifiers) {
         return forClassElement(modifiers);
     }
 
-    public int forClassMethod(Set<Mod> modifiers) {
+    public int forClassMethod(Traversable<Mod> modifiers) {
         return forClassElement(modifiers);
     }
 
-    public int forInterfaceMethod(Set<Mod> modifiers) {
+    public int forInterfaceMethod(Traversable<Mod> modifiers) {
         return forClassElement(modifiers);
     }
 
-    public int forConstructor(Set<Mod> modifiers) {
+    public int forConstructor(Traversable<Mod> modifiers) {
         return forClassElement(modifiers);
     }
 
-    public int forParameter(Set<Mod> modifiers) {
+    public int forParameter(Traversable<Mod> modifiers) {
         return forClassElement(modifiers);
     }
 
-    private static int forClassElement(Set<Mod> modifiers) {
+    private static int forClassElement(Traversable<Mod> modifiers) {
         int flags = 0;
         for (var modifier : modifiers) {
             flags |= switch (modifier) {
@@ -108,23 +108,23 @@ class Flags {
     }
 
 
-    public int forModule(Set<Mod> modifiers) {
+    public int forModule(Traversable<Mod> modifiers) {
         return forModuleElement(modifiers);
     }
 
-    public int forModuleRequires(Set<Mod> modifiers) {
+    public int forModuleRequires(Traversable<Mod> modifiers) {
         return forModuleElement(modifiers);
     }
 
-    public int forModuleExports(Set<Mod> modifiers) {
+    public int forModuleExports(Traversable<Mod> modifiers) {
         return forModuleElement(modifiers);
     }
 
-    public int forModuleOpens(Set<Mod> modifiers) {
+    public int forModuleOpens(Traversable<Mod> modifiers) {
         return forModuleElement(modifiers);
     }
 
-    private static int forModuleElement(Set<Mod> modifiers) {
+    private static int forModuleElement(Traversable<Mod> modifiers) {
         int flags = 0;
         for (var modifier : modifiers) {
             flags |= switch (modifier) {

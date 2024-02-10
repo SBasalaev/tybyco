@@ -24,6 +24,7 @@
 package me.sbasalaev.tybyco.descriptors;
 
 import me.sbasalaev.collection.Set;
+import me.sbasalaev.collection.Traversable;
 
 /**
  * Name and attributes for a nested, member, local or anonymous class.
@@ -52,13 +53,13 @@ public final class JvmNestedClass extends JvmClass {
 
     JvmNestedClass(JvmClass enclosing,
                    ClassKind kind,
-                   Set<Mod> modifiers,
+                   Traversable<Mod> modifiers,
                    String qualifiedName,
                    String simpleName,
                    boolean isMember) {
         super(kind, qualifiedName);
         this.enclosing = enclosing;
-        this.modifiers = modifiers.clone();
+        this.modifiers = modifiers.toSet();
         this.simpleName = simpleName;
         this.isMember = isMember;
     }

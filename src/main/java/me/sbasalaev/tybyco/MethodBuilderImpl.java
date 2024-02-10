@@ -27,7 +27,7 @@ import static me.sbasalaev.API.concat;
 import static me.sbasalaev.API.list;
 import me.sbasalaev.collection.List;
 import me.sbasalaev.collection.MutableList;
-import me.sbasalaev.collection.Set;
+import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.builders.CodeBlockBuilder;
 import me.sbasalaev.tybyco.builders.MethodBuilder;
 import me.sbasalaev.tybyco.builders.ParameterBuilder;
@@ -123,7 +123,7 @@ final class MethodBuilderImpl<Result> implements MethodBuilder<Result> {
     }
 
     @Override
-    public ParameterBuilder<MethodBuilder<Result>> parameter(Set<Mod> modifiers, String name) {
+    public ParameterBuilder<MethodBuilder<Result>> parameter(String name, Traversable<Mod> modifiers) {
         int index = parameterCount;
         parameterCount++;
         mv.visitParameter(name, classBuilder.options.flags().forParameter(modifiers));

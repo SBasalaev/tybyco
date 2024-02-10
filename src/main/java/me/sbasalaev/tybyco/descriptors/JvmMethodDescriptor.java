@@ -42,8 +42,14 @@ public final class JvmMethodDescriptor extends JvmDescriptor {
     private final JvmTypeOrVoid returnType;
 
     /** Creates new method descriptor with given argument and return types. */
-    public JvmMethodDescriptor(List<JvmType> argumentTypes, JvmTypeOrVoid returnType) {
+    public JvmMethodDescriptor(JvmTypeOrVoid returnType, List<JvmType> argumentTypes) {
         this.argumentTypes = argumentTypes;
+        this.returnType = returnType;
+    }
+
+    /** Creates new method descriptor with given argument and return types. */
+    public JvmMethodDescriptor(JvmTypeOrVoid returnType, JvmType... argumentTypes) {
+        this.argumentTypes = list(argumentTypes);
         this.returnType = returnType;
     }
 
@@ -60,25 +66,25 @@ public final class JvmMethodDescriptor extends JvmDescriptor {
     /** Returns method descriptor with given argument types added at the beginning. */
     public JvmMethodDescriptor prepend(JvmType... types) {
         if (types.length == 0) return this;
-        return new JvmMethodDescriptor(concat(list(types), argumentTypes), returnType);
+        return new JvmMethodDescriptor(returnType, concat(list(types), argumentTypes));
     }
 
     /** Returns method descriptor with given argument types added at the end. */
     public JvmMethodDescriptor append(JvmType... types) {
         if (types.length == 0) return this;
-        return new JvmMethodDescriptor(concat(argumentTypes, list(types)), returnType);
+        return new JvmMethodDescriptor(returnType, concat(argumentTypes, list(types)));
     }
 
     /** Returns method descriptor with the first argument removed. */
     public JvmMethodDescriptor dropFirst() {
         if (argumentTypes.isEmpty()) throw new NoSuchElementException("The descriptor has no argument types");
-        return new JvmMethodDescriptor(argumentTypes.from(1), returnType);
+        return new JvmMethodDescriptor(returnType, argumentTypes.from(1));
     }
 
     /** Returns method descriptor with the return type replaced by a given type. */
     public JvmMethodDescriptor withReturnType(JvmTypeOrVoid type) {
         if (type.equals(this.returnType)) return this;
-        return new JvmMethodDescriptor(argumentTypes, type);
+        return new JvmMethodDescriptor(type, argumentTypes);
     }
 
     @Override
@@ -96,7 +102,7 @@ public final class JvmMethodDescriptor extends JvmDescriptor {
     /** The descriptor with erased types. */
     public JvmMethodDescriptor erasure() {
         if (!isGeneric()) return this;
-        return new JvmMethodDescriptor(argumentTypes.mapped(JvmType::erasure), returnType.erasure());
+        return new JvmMethodDescriptor(returnType.erasure(), argumentTypes.mapped(JvmType::erasure));
     }
 
     /**

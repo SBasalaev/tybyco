@@ -23,9 +23,9 @@
  */
 package me.sbasalaev.tybyco;
 
+import java.util.EnumSet;
 import static me.sbasalaev.API.chain;
 import static me.sbasalaev.API.list;
-import me.sbasalaev.collection.Set;
 import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.descriptors.JvmClass;
 import me.sbasalaev.tybyco.descriptors.JvmNestedClass;
@@ -44,23 +44,23 @@ final class CheckedFlags extends Flags {
         this.options = options;
     }
 
-    private static final Set<Mod> ALLOWED_SYNTH = Set.of(
+    private static final EnumSet<Mod> ALLOWED_SYNTH = EnumSet.of(
             Mod.MANDATED,
             Mod.SYNTHETIC
     );
-    private static final Set<Mod> ALLOWED_REQUIRES = Set.of(
+    private static final EnumSet<Mod> ALLOWED_REQUIRES = EnumSet.of(
             Mod.MANDATED,
             Mod.STATIC,
             Mod.SYNTHETIC,
             Mod.TRANSITIVE
     );
-    private static final Set<Mod> ALLOWED_MODULE = Set.of(
+    private static final EnumSet<Mod> ALLOWED_MODULE = EnumSet.of(
             Mod.DEPRECATED,
             Mod.MANDATED,
             Mod.OPEN,
             Mod.SYNTHETIC
     );
-    private static final Set<Mod> ALLOWED_INNER_CLASS = Set.of(
+    private static final EnumSet<Mod> ALLOWED_INNER_CLASS = EnumSet.of(
             Mod.ABSTRACT,
             Mod.FINAL, 
             Mod.PRIVATE,
@@ -69,14 +69,14 @@ final class CheckedFlags extends Flags {
             Mod.STATIC,
             Mod.SYNTHETIC
     );
-    private static final Set<Mod> ALLOWED_CLASS = Set.of(
+    private static final EnumSet<Mod> ALLOWED_CLASS = EnumSet.of(
             Mod.ABSTRACT,
             Mod.DEPRECATED,
             Mod.FINAL, 
             Mod.PUBLIC, 
             Mod.SYNTHETIC
     );
-    private static final Set<Mod> ALLOWED_CLASS_FIELD = Set.of(
+    private static final EnumSet<Mod> ALLOWED_CLASS_FIELD = EnumSet.of(
             Mod.DEPRECATED,
             Mod.FINAL,
             Mod.PRIVATE,
@@ -87,14 +87,14 @@ final class CheckedFlags extends Flags {
             Mod.TRANSIENT,
             Mod.VOLATILE
     );
-    private static final Set<Mod> ALLOWED_INTERFACE_FIELD = Set.of(
+    private static final EnumSet<Mod> ALLOWED_INTERFACE_FIELD = EnumSet.of(
             Mod.DEPRECATED,
             Mod.FINAL,
             Mod.PUBLIC,
             Mod.STATIC,
             Mod.SYNTHETIC
     );
-    private static final Set<Mod> ALLOWED_CLASS_METHOD = Set.of(
+    private static final EnumSet<Mod> ALLOWED_CLASS_METHOD = EnumSet.of(
             Mod.ABSTRACT,
             Mod.BRIDGE,
             Mod.FINAL,
@@ -108,7 +108,7 @@ final class CheckedFlags extends Flags {
             Mod.SYNTHETIC,
             Mod.VARARGS
     );
-    private static final Set<Mod> ALLOWED_INTERFACE_METHOD = Set.of(
+    private static final EnumSet<Mod> ALLOWED_INTERFACE_METHOD = EnumSet.of(
             Mod.ABSTRACT,
             Mod.BRIDGE,
             Mod.PRIVATE,
@@ -118,7 +118,7 @@ final class CheckedFlags extends Flags {
             Mod.SYNTHETIC,
             Mod.VARARGS
     );
-    private static final Set<Mod> ALLOWED_CONSTRUCTOR = Set.of(
+    private static final EnumSet<Mod> ALLOWED_CONSTRUCTOR = EnumSet.of(
             Mod.PRIVATE,
             Mod.PROTECTED,
             Mod.PUBLIC,
@@ -126,17 +126,17 @@ final class CheckedFlags extends Flags {
             Mod.SYNTHETIC,
             Mod.VARARGS
     );
-    private static final Set<Mod> ALLOWED_PARAMETER = Set.of(
+    private static final EnumSet<Mod> ALLOWED_PARAMETER = EnumSet.of(
             Mod.FINAL,
             Mod.MANDATED,
             Mod.SYNTHETIC
     );
-    private static final Set<Mod> CONFLICTING_ACCESS = Set.of(
+    private static final EnumSet<Mod> CONFLICTING_ACCESS = EnumSet.of(
             Mod.PRIVATE,
             Mod.PROTECTED,
             Mod.PUBLIC
     );
-    private static final Set<Mod> CONFLICTING_ABSTRACT = Set.of(
+    private static final EnumSet<Mod> CONFLICTING_ABSTRACT = EnumSet.of(
             Mod.FINAL,
             Mod.NATIVE,
             Mod.PRIVATE,
@@ -152,7 +152,7 @@ final class CheckedFlags extends Flags {
     }
 
     @Override
-    public int forClass(JvmClass className, Set<Mod> modifiers) {
+    public int forClass(JvmClass className, Traversable<Mod> modifiers) {
         checkForClassElement(modifiers, "classes", ALLOWED_CLASS);
         if (className.classKind().isInterface()) {
             checkRequired(modifiers, Mod.ABSTRACT, "interfaces");
@@ -162,16 +162,16 @@ final class CheckedFlags extends Flags {
     }
 
     @Override
-    public int forClassField(Set<Mod> modifiers) {
+    public int forClassField(Traversable<Mod> modifiers) {
         checkForClassElement(modifiers, "class fields", ALLOWED_CLASS_FIELD);
-        if (modifiers.contains(Mod.VOLATILE) && modifiers.contains(Mod.FINAL)) {
+        if (modifiers.exists(Mod.VOLATILE::equals) && modifiers.exists(Mod.FINAL::equals)) {
             throwConflictingMods(list(Mod.VOLATILE, Mod.FINAL), "field");
         }
         return super.forClassField(modifiers);
     }
 
     @Override
-    public int forInterfaceField(Set<Mod> modifiers) {
+    public int forInterfaceField(Traversable<Mod> modifiers) {
         checkForClassElement(modifiers, "interface fields", ALLOWED_INTERFACE_FIELD);
         checkRequired(modifiers, Mod.PUBLIC, "interface fields");
         checkRequired(modifiers, Mod.STATIC, "interface fields");
@@ -180,13 +180,13 @@ final class CheckedFlags extends Flags {
     }
 
     @Override
-    public int forClassMethod(Set<Mod> modifiers) {
+    public int forClassMethod(Traversable<Mod> modifiers) {
         checkForClassElement(modifiers, "class methods", ALLOWED_CLASS_METHOD);
         return super.forClassMethod(modifiers);
     }
 
     @Override
-    public int forInterfaceMethod(Set<Mod> modifiers) {
+    public int forInterfaceMethod(Traversable<Mod> modifiers) {
         checkForClassElement(modifiers, "interface methods", ALLOWED_INTERFACE_METHOD);
         if (!options.version().atLeast(JavaVersion.V8)) {
             checkRequired(modifiers, Mod.PUBLIC, "interface methods unless Java version is ≥ 1.8");
@@ -196,74 +196,78 @@ final class CheckedFlags extends Flags {
     }
 
     @Override
-    public int forConstructor(Set<Mod> modifiers) {
+    public int forConstructor(Traversable<Mod> modifiers) {
         checkForClassElement(modifiers, "constructors", ALLOWED_CONSTRUCTOR);
         return super.forConstructor(modifiers);
     }
 
     @Override
-    public int forParameter(Set<Mod> modifiers) {
+    public int forParameter(Traversable<Mod> modifiers) {
         checkForClassElement(modifiers, "formal parameters", ALLOWED_PARAMETER);
         return super.forParameter(modifiers);
     }
 
-    private void checkForClassElement(Set<Mod> modifiers, String name, Set<Mod> allowed) {
-        for (Mod modifier : modifiers.without(allowed)) {
-            throwInvalidMod(modifier, name);
+    private void checkForClassElement(Traversable<Mod> modifiers, String name, EnumSet<Mod> allowed) {
+        for (Mod modifier : modifiers) {
+            if (!allowed.contains(modifier)) {
+                throwInvalidMod(modifier, name);
+            }
+            if (modifier == Mod.ABSTRACT) {
+                var conflicting = modifiers.filter(CONFLICTING_ABSTRACT::contains);
+                if (conflicting.nonEmpty()) {
+                    throwConflictingMods(chain(list(Mod.ABSTRACT), conflicting), name);
+                }
+            }
+            if (modifier == Mod.STRICT && options.version().atLeast(JavaVersion.V17)) {
+                throw new IllegalArgumentException("Modifier STRICT is not supported in Java ≥ 17");
+            }
         }
         var access = modifiers.filter(CONFLICTING_ACCESS::contains);
         if (access.count() > 1) {
             throwConflictingMods(access, name);
         }
-        if (modifiers.contains(Mod.ABSTRACT)) {
-            var conflicting = modifiers.filter(CONFLICTING_ABSTRACT::contains);
-            if (conflicting.nonEmpty()) {
-                throwConflictingMods(chain(list(Mod.ABSTRACT), conflicting), name);
-            }
-        }
-        if (modifiers.contains(Mod.STRICT) && options.version().atLeast(JavaVersion.V17)) {
-            throw new IllegalArgumentException("Modifier STRICT is not supported in Java ≥ 17");
-        }
     }
 
     @Override
-    public int forModule(Set<Mod> modifiers) {
+    public int forModule(Traversable<Mod> modifiers) {
         checkForModuleElement(modifiers, "modules", ALLOWED_MODULE);
         return super.forModule(modifiers);
     }
 
     @Override
-    public int forModuleRequires(Set<Mod> modifiers) {
+    public int forModuleRequires(Traversable<Mod> modifiers) {
         checkForModuleElement(modifiers, "module requires", ALLOWED_REQUIRES);
         return super.forModuleRequires(modifiers);
     }
 
     @Override
-    public int forModuleExports(Set<Mod> modifiers) {
+    public int forModuleExports(Traversable<Mod> modifiers) {
         checkForModuleElement(modifiers, "module exports", ALLOWED_SYNTH);
         return super.forModuleExports(modifiers);
     }
 
     @Override
-    public int forModuleOpens(Set<Mod> modifiers) {
+    public int forModuleOpens(Traversable<Mod> modifiers) {
         checkForModuleElement(modifiers, "module opens", ALLOWED_SYNTH);
         return super.forModuleOpens(modifiers);
     }
 
-    private static void checkForModuleElement(Set<Mod> modifiers, String name, Set<Mod> allowed) {
-        for (var modifier : modifiers.without(allowed)) {
-            throwInvalidMod(modifier, name);
+    private static void checkForModuleElement(Traversable<Mod> modifiers, String name, EnumSet<Mod> allowed) {
+        for (var modifier : modifiers) {
+            if (!allowed.contains(modifier)) {
+                throwInvalidMod(modifier, name);
+            }
         }
     }
 
-    private static void checkRequired(Set<Mod> modifiers, Mod required, String elementType) {
-        if (!modifiers.contains(required)) {
+    private static void checkRequired(Traversable<Mod> modifiers, Mod required, String elementType) {
+        if (!modifiers.exists(required::equals)) {
             throw new IllegalArgumentException("Modifier " + required + " is required for " + elementType);
         }
     }
 
-    private static void checkInvalid(Set<Mod> modifiers, Mod invalid, String elementType) {
-        if (modifiers.contains(invalid)) {
+    private static void checkInvalid(Traversable<Mod> modifiers, Mod invalid, String elementType) {
+        if (modifiers.exists(invalid::equals)) {
             throwInvalidMod(invalid, elementType);
         }
     }

@@ -23,8 +23,9 @@
  */
 package me.sbasalaev.tybyco.builders;
 
+import static me.sbasalaev.API.list;
 import me.sbasalaev.collection.List;
-import me.sbasalaev.collection.Set;
+import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.descriptors.JvmAnnotation;
 import me.sbasalaev.tybyco.descriptors.JvmClassType;
 import me.sbasalaev.tybyco.descriptors.JvmTypeVariable;
@@ -48,8 +49,21 @@ public interface MethodBuilder<Result>
     /** Adds thrown exception to the signature of this method. */
     MethodBuilder<Result> exception(JvmTypeVariable exceptionType);
 
-    /** Adds formal parameter to this method and returns a builder to visit its annotations. */
-    ParameterBuilder<MethodBuilder<Result>> parameter(Set<Mod> modifiers, String name);
+    /**
+     * Adds formal parameter name to this method and returns a builder to visit its annotations.
+     */
+    ParameterBuilder<MethodBuilder<Result>> parameter(String name, Traversable<Mod> modifiers);
+
+    /**
+     * Adds formal parameter name to this method and returns a builder to visit its annotations.
+     *
+     * @param name the name of the parameter.
+     * @param modifiers the modifiers among {@link Mod#FINAL}, {@link Mod#MANDATED}
+     *     and {@link Mod#SYNTHETIC}.
+     */
+    default ParameterBuilder<MethodBuilder<Result>> parameter(String name, Mod... modifiers) {
+        return parameter(name, list(modifiers));
+    }
 
     /**
      * Builds code for this method or constructor.
@@ -57,9 +71,25 @@ public interface MethodBuilder<Result>
      * @param parameterNames
      *     names of method parameters that will be assigned to local variables.
      *     Their number must match number of types in the method descriptor.
-     *     The names may not coincide with the ones given in
+     *     The names may differ from the ones given in
      *     {@link #parameter(me.sbasalaev.collection.Set, java.lang.String) parameter()}
-     *     method and may be empty if the corresponding local is to remain anonymous.
+     *     method and may be empty strings if the corresponding local is to
+     *     remain anonymous.
      */
     CodeBlockBuilder<MethodBuilder<Result>> code(List<String> parameterNames);
+
+    /**
+     * Builds code for this method or constructor.
+     *
+     * @param parameterNames
+     *     names of method parameters that will be assigned to local variables.
+     *     Their number must match number of types in the method descriptor.
+     *     The names may differ from the ones given in
+     *     {@link #parameter(me.sbasalaev.collection.Set, java.lang.String) parameter()}
+     *     method and may be empty strings if the corresponding local is to
+     *     remain anonymous.
+     */
+    default CodeBlockBuilder<MethodBuilder<Result>> code(String... parameterNames) {
+        return code(list(parameterNames));
+    }
 }

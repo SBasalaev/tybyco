@@ -23,7 +23,8 @@
  */
 package me.sbasalaev.tybyco.builders;
 
-import me.sbasalaev.collection.Set;
+import static me.sbasalaev.API.list;
+import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.CompiledClass;
 import me.sbasalaev.tybyco.descriptors.*;
 
@@ -76,14 +77,28 @@ public interface ClassOrInterfaceBuilder<Self extends ClassOrInterfaceBuilder<Se
     /**
      * Returns a builder for a field of this class.
      *
+     * @param name the field name.
+     * @param type the (possibly annotated) field type.
      * @param modifiers field modifiers among {@link Mod#DEPRECATED},
      *     {@link Mod#FINAL}, {@link Mod#PRIVATE}, {@link Mod#PROTECTED},
      *     {@link Mod#PUBLIC}, {@link Mod#STATIC}, {@link Mod#SYNTHETIC},
      *     {@link Mod#TRANSIENT} and {@link Mod#VOLATILE}.
+     */
+    FieldBuilder<Self> field(String name, JvmType type, Traversable<Mod> modifiers);
+
+    /**
+     * Returns a builder for a field of this class.
+     *
      * @param name the field name.
      * @param type the (possibly annotated) field type.
+     * @param modifiers field modifiers among {@link Mod#DEPRECATED},
+     *     {@link Mod#FINAL}, {@link Mod#PRIVATE}, {@link Mod#PROTECTED},
+     *     {@link Mod#PUBLIC}, {@link Mod#STATIC}, {@link Mod#SYNTHETIC},
+     *     {@link Mod#TRANSIENT} and {@link Mod#VOLATILE}.
      */
-    FieldBuilder<Self> field(Set<Mod> modifiers, String name, JvmType type);
+    default FieldBuilder<Self> field(String name, JvmType type, Mod... modifiers) {
+        return field(name, type, list(modifiers));
+    }
 
     /**
      * Returns a builder for a compile-type constant field of this class.
@@ -95,11 +110,43 @@ public interface ClassOrInterfaceBuilder<Self extends ClassOrInterfaceBuilder<Se
      * be put on the field type by
      * {@link FieldBuilder#typeAnnotation(me.sbasalaev.tybyco.descriptors.JvmAnnotation) typeAnnotation()}
      * method.
+     *
+     * @param name the field name.
+     * @param value the value of this constant.
+     * @param modifiers field modifiers among {@link Mod#DEPRECATED},
+     *     {@link Mod#PRIVATE}, {@link Mod#PROTECTED}, {@link Mod#PUBLIC},
+     *     {@link Mod#SYNTHETIC}, {@link Mod#TRANSIENT} and {@link Mod#VOLATILE}.
      */
-    FieldBuilder<Self> constant(Set<Mod> modifiers, String name, Object value);
+    FieldBuilder<Self> constant(String name, Object value, Traversable<Mod> modifiers);
+
+    /**
+     * Returns a builder for a compile-type constant field of this class.
+     * The modifiers {@link Mod#STATIC} and {@link Mod#FINAL} are added
+     * automatically and may be omitted. The {@code value} must be one of
+     * the types {@link Boolean}, {@link Byte}, {@link Short}, {@link Integer},
+     * {@link Long}, {@link Float}, {@link Double}, {@link Character} or {@link String}.
+     * The type of the field is determined by the value. Type annotations may
+     * be put on the field type by
+     * {@link FieldBuilder#typeAnnotation(me.sbasalaev.tybyco.descriptors.JvmAnnotation) typeAnnotation()}
+     * method.
+     *
+     * @param name the field name.
+     * @param value the value of this constant.
+     * @param modifiers field modifiers among {@link Mod#DEPRECATED},
+     *     {@link Mod#PRIVATE}, {@link Mod#PROTECTED}, {@link Mod#PUBLIC},
+     *     {@link Mod#SYNTHETIC}, {@link Mod#TRANSIENT} and {@link Mod#VOLATILE}.
+     */
+    default FieldBuilder<Self> constant(String name, Object value, Mod... modifiers) {
+        return constant(name, value, list(modifiers));
+    }
 
     /** Returns builder for the method of this class. */
-    MethodBuilder<Self> method(Set<Mod> modifiers, String name, JvmMethodDescriptor descriptor);
+    MethodBuilder<Self> method(String name, JvmMethodDescriptor descriptor, Traversable<Mod> modifiers);
+
+    /** Returns builder for the method of this class. */
+    default MethodBuilder<Self> method(String name, JvmMethodDescriptor descriptor, Mod... modifiers) {
+        return method(name, descriptor, list(modifiers));
+    }
 
     /** Returns builder of the code for the static class initializer. */
     CodeBlockBuilder<Self> staticInitializer();

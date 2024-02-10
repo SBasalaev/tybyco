@@ -23,10 +23,10 @@
  */
 package me.sbasalaev.tybyco.descriptors;
 
+import static me.sbasalaev.API.set;
 import me.sbasalaev.Require;
 import me.sbasalaev.collection.MutableSet;
-import me.sbasalaev.collection.Set;
-import org.checkerframework.checker.index.qual.NonNegative;
+import me.sbasalaev.collection.Traversable;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -85,7 +85,7 @@ public sealed abstract class JvmClass
             }
         }
         if (clazz.isMemberClass()) {
-            return enclosing.newMember(kind, mods, clazz.getSimpleName());
+            return enclosing.newMember(kind, clazz.getSimpleName(), mods);
         } else {
             return enclosing.newNonMember(kind, mods, clazz.getName(), clazz.getSimpleName());
         }
@@ -96,7 +96,7 @@ public sealed abstract class JvmClass
      * The qualified name of the member is formed as
      * <pre>this.qualifiedName + '$' + simpleName</pre>
      */
-    public JvmNestedClass newMember(ClassKind kind, Set<Mod> modifiers, String simpleName) {
+    public JvmNestedClass newMember(ClassKind kind, String simpleName, Traversable<Mod> modifiers) {
         switch (kind) {
             case MODULE, PACKAGE -> throw new IllegalArgumentException("Member class can not be " + kind.keyword());
         }
@@ -106,16 +106,36 @@ public sealed abstract class JvmClass
     }
 
     /**
+     * Returns the member class of this class.
+     * The qualified name of the member is formed as
+     * <pre>this.qualifiedName + '$' + simpleName</pre>
+     */
+    public JvmNestedClass newMember(ClassKind kind, String simpleName, Mod... modifiers) {
+        return newMember(kind, simpleName, set(modifiers));
+    }
+
+    /**
      * Returns the local class nested in this class.
      * Integer {@code index} is used to distinguish between different nested
      * classes with the same simple name. The qualified name of the nested class
      * is formed as
      * <pre>qualifiedName + '$' + index + simpleName</pre>
      */
-    public JvmNestedClass newLocal(ClassKind kind, Set<Mod> modifiers, @NonNegative int index, String simpleName) {
+    public JvmNestedClass newLocal(ClassKind kind, int index, String simpleName, Traversable<Mod> modifiers) {
         Require.nonNegative(index, "index");
         String qname = qualifiedName + '$' + index + simpleName;
         return newNonMember(kind, modifiers, qname, simpleName);
+    }
+
+    /**
+     * Returns the local class nested in this class.
+     * Integer {@code index} is used to distinguish between different nested
+     * classes with the same simple name. The qualified name of the nested class
+     * is formed as
+     * <pre>qualifiedName + '$' + index + simpleName</pre>
+     */
+    public JvmNestedClass newLocal(ClassKind kind, int index, String simpleName, Mod... modifiers) {
+        return newLocal(kind, index, simpleName, set(modifiers));
     }
 
     /**
@@ -125,14 +145,25 @@ public sealed abstract class JvmClass
      * formed as
      * <pre>qualifiedName + '$' + index</pre>
      */
-    public JvmNestedClass newAnonymous(ClassKind kind, Set<Mod> modifiers, @NonNegative int index) {
+    public JvmNestedClass newAnonymous(ClassKind kind, int index, Traversable<Mod> modifiers) {
         Require.nonNegative(index, "index");
         String qname = qualifiedName + '$' + index;
         return newNonMember(kind, modifiers, qname, "");
     }
 
+    /**
+     * Returns the anonymous class nested in this class.
+     * Integer {@code index} is used to distinguish between different anonymous
+     * nested classes. The qualified name of the anonymous nested class is
+     * formed as
+     * <pre>qualifiedName + '$' + index</pre>
+     */
+    public JvmNestedClass newAnonymous(ClassKind kind, int index, Mod... modifiers) {
+        return newAnonymous(kind, index, set(modifiers));
+    }
+
     private JvmNestedClass newNonMember(ClassKind kind,
-            Set<Mod> modifiers, String qualifiedName, String simpleName) {
+            Traversable<Mod> modifiers, String qualifiedName, String simpleName) {
         switch (kind) {
             case MODULE, PACKAGE, ANNOTATION -> throw new IllegalArgumentException("Local class can not be " + kind.keyword());
         }
@@ -140,7 +171,7 @@ public sealed abstract class JvmClass
         return new JvmNestedClass(this, kind, modifiers, qualifiedName, simpleName, false);
     }
 
-    private static void verifyModifiers(Set<Mod> modifiers) {
+    private static void verifyModifiers(Traversable<Mod> modifiers) {
         for (var modifier : modifiers) {
             switch (modifier) {
                 case PUBLIC, PROTECTED, PRIVATE, STATIC, FINAL, ABSTRACT, SYNTHETIC -> { /* ok */ }

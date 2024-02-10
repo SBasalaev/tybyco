@@ -23,12 +23,12 @@
  */
 package me.sbasalaev.tybyco;
 
+import static me.sbasalaev.API.chain;
 import static me.sbasalaev.API.concat;
 import static me.sbasalaev.API.list;
-import static me.sbasalaev.API.set;
 import me.sbasalaev.collection.List;
 import me.sbasalaev.collection.MutableList;
-import me.sbasalaev.collection.Set;
+import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.builders.*;
 import me.sbasalaev.tybyco.descriptors.*;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -51,7 +51,7 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
     private JvmClassType superClass = new JvmClassType(JvmClass.JVM_OBJECT);
     private final MutableList<JvmClassType> interfaces = MutableList.empty();
 
-    ClassBuilderImpl(Options options, Set<Mod> modifiers, JvmClass className) {
+    ClassBuilderImpl(Options options, Traversable<Mod> modifiers, JvmClass className) {
         super(options, className);
         this.access = options.flags().forClass(className, modifiers);
         // visit here to tell ASM the version, will be visited again at the end
@@ -161,7 +161,7 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
     }
 
     @Override
-    public FieldBuilder<Self> field(Set<Mod> modifiers, String name, JvmType type) {
+    public FieldBuilder<Self> field(String name, JvmType type, Traversable<Mod> modifiers) {
         learnClasses(type);
         int flags = className.classKind().isInterface()
             ? options.flags().forInterfaceField(modifiers)
@@ -172,7 +172,7 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
     }
 
     @Override
-    public FieldBuilder<Self> constant(Set<Mod> modifiers, String name, Object value) {
+    public FieldBuilder<Self> constant(String name, Object value, Traversable<Mod> modifiers) {
         Object constValue = value;
         JvmType type = switch (value) {
             case Boolean z -> {
@@ -198,7 +198,7 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
             case String    __ -> new JvmClassType(JvmClass.JVM_STRING);
             default -> throw new IllegalArgumentException("invalid constant value: " + value);
         };
-        var constMods = Set.union(modifiers, set(Mod.FINAL, Mod.STATIC));
+        var constMods = chain(modifiers, list(Mod.FINAL, Mod.STATIC));
         int flags = className.classKind().isInterface()
             ? options.flags().forInterfaceField(constMods)
             : options.flags().forClassField(constMods);
@@ -207,7 +207,7 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
     }
 
     @Override
-    public MethodBuilder<Self> method(Set<Mod> modifiers, String name, JvmMethodDescriptor descriptor) {
+    public MethodBuilder<Self> method(String name, JvmMethodDescriptor descriptor, Traversable<Mod> modifiers) {
         switch (name) {
             case INIT -> throw new IllegalArgumentException("use constructor() to visit constructors");
             case CLINIT -> throw new IllegalArgumentException("use staticInitializer() to visit static initilializers");
@@ -216,12 +216,12 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
             ? options.flags().forInterfaceMethod(modifiers)
             : options.flags().forClassMethod(modifiers);
         var mv = cw.visitMethod(flags, name, descriptor.nonGenericString(), null, null);
-        boolean isStatic = modifiers.contains(Mod.STATIC);
+        boolean isStatic = (flags & Opcodes.ACC_STATIC) != 0;
         return new MethodBuilderImpl<>(this, descriptor, false, isStatic, mv);
     }
 
     @Override
-    public MethodBuilder<Self> constructor(Set<Mod> modifiers, JvmMethodDescriptor descriptor) {
+    public MethodBuilder<Self> constructor(JvmMethodDescriptor descriptor, Traversable<Mod> modifiers) {
         int flags = options.flags().forConstructor(modifiers);
         var mv = cw.visitMethod(flags, INIT, descriptor.nonGenericString(), null, null);
         boolean isMemberConstructor = className instanceof JvmNestedClass nested
@@ -231,7 +231,7 @@ final class ClassBuilderImpl<Self extends ClassBuilder<Self>>
 
     @Override
     public CodeBlockBuilder<Self> staticInitializer() {
-        var staticDesc = new JvmMethodDescriptor(list(), JvmVoid.INSTANCE);
+        var staticDesc = new JvmMethodDescriptor(JvmVoid.INSTANCE);
         var mv = cw.visitMethod(Opcodes.ACC_STATIC, CLINIT, staticDesc.nonGenericString(), null, null);
         return new CheckedCodeBuilderImpl<>(this, self(), mv, true, staticDesc, list());
     }

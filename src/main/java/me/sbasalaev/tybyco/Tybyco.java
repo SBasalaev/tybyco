@@ -24,7 +24,9 @@
 package me.sbasalaev.tybyco;
 
 import java.lang.module.ModuleDescriptor;
-import me.sbasalaev.collection.Set;
+import static me.sbasalaev.API.list;
+import me.sbasalaev.Opt;
+import me.sbasalaev.collection.Traversable;
 import me.sbasalaev.tybyco.builders.ClassBuilder;
 import me.sbasalaev.tybyco.builders.ClassOrInterfaceBuilder;
 import me.sbasalaev.tybyco.builders.ModuleBuilder;
@@ -62,12 +64,13 @@ public final class Tybyco {
     /**
      * Returns a builder for a module with given name and version.
      *
+     * @param moduleName the name of the module.
+     * @param version    the version of the module in the format described
+     *     by {@link ModuleDescriptor.Version}, or {@code none()}.
      * @param modifiers module modifiers among {@link Mod#OPEN},
      *     {@link Mod#DEPRECATED}, {@link Mod#SYNTHETIC} and {@link Mod#MANDATED}.
-     * @param moduleName the name of the module.
-     * @param version    the version of the module in the format described by {@link ModuleDescriptor.Version }.
      */
-    public ModuleBuilder buildModule(Set<Mod> modifiers, String moduleName, String version) {
+    public ModuleBuilder buildModule(String moduleName, Opt<String> version, Traversable<Mod> modifiers) {
         if (!options.version().atLeast(JavaVersion.V9)) {
             throw new IllegalStateException("Modules require Java version ≥ 9");
         }
@@ -75,20 +78,16 @@ public final class Tybyco {
     }
 
     /**
-     * Returns a builder for a module with given name.
+     * Returns a builder for a module with given name and version.
      *
+     * @param moduleName the name of the module.
+     * @param version    the version of the module in the format described
+     *     by {@link ModuleDescriptor.Version}, or {@code none()}.
      * @param modifiers module modifiers among {@link Mod#OPEN},
      *     {@link Mod#DEPRECATED}, {@link Mod#SYNTHETIC} and {@link Mod#MANDATED}.
-     * @param moduleName the name of the module.
-     *
-     * @throws IllegalArgumentException if the set of modifiers contains
-     *     elements invalid for a module.
      */
-    public ModuleBuilder buildModule(Set<Mod> modifiers, String moduleName) {
-        if (!options.version().atLeast(JavaVersion.V9)) {
-            throw new IllegalStateException("Modules require Java version ≥ 9");
-        }
-        return new ModuleBuilderImpl(options, modifiers, moduleName, null);
+    public ModuleBuilder buildModule(String moduleName, Opt<String> version, Mod... modifiers) {
+        return buildModule(moduleName, version, list(modifiers));
     }
 
     /** Returns a builder for a package-info file. */
@@ -100,14 +99,11 @@ public final class Tybyco {
      * Returns a builder to build an interface or an annotation with given name.
      * The {@link Mod#ABSTRACT} modifier may be skipped and will be added automatically.
      *
+     * @param interfaceName  the interface name.
      * @param modifiers interface modifiers among {@link Mod#PUBLIC},
      *      {@link Mod#DEPRECATED} and {@link Mod#SYNTHETIC}.
-     * @param interfaceName  the interface name.
      */
-    public ClassOrInterfaceBuilder<?> buildInterface(Set<Mod> modifiers, JvmClass interfaceName) {
-        if (modifiers.contains(Mod.FINAL)) {
-            throw new IllegalArgumentException("Invalid modifier FINAL for an interface");
-        }
+    public ClassOrInterfaceBuilder<?> buildInterface(JvmClass interfaceName, Traversable<Mod> modifiers) {
         if (!interfaceName.classKind().isInterface()) {
             throw new IllegalArgumentException(interfaceName + " is not an interface");
         }
@@ -115,21 +111,46 @@ public final class Tybyco {
     }
 
     /**
+     * Returns a builder to build an interface or an annotation with given name.
+     * The {@link Mod#ABSTRACT} modifier may be skipped and will be added automatically.
+     * This is a variadic overload for
+     * {@link #buildInterface(me.sbasalaev.tybyco.descriptors.JvmClass, me.sbasalaev.collection.Set) }.
+     *
+     * @param interfaceName  the interface name.
+     * @param modifiers interface modifiers among {@link Mod#PUBLIC},
+     *      {@link Mod#DEPRECATED} and {@link Mod#SYNTHETIC}.
+     */
+    public ClassOrInterfaceBuilder<?> buildInterface(JvmClass interfaceName, Mod... modifiers) {
+        return buildInterface(interfaceName, list(modifiers));
+    }
+
+    /**
      * Returns a builder to build a class with given name.
      *
+     * @param className  the class name.
      * @param modifiers class modifiers among {@link Mod#ABSTRACT},
      *     {@link Mod#DEPRECATED}, {@link Mod#FINAL}, {@link Mod#PUBLIC}
      *     and {@link Mod#SYNTHETIC}.
-     * @param className  the class name.
      */
-    public ClassBuilder<?> buildClass(Set<Mod> modifiers, JvmClass className) {
-        if (modifiers.contains(Mod.ABSTRACT) && modifiers.contains(Mod.FINAL)) {
-            throw new IllegalArgumentException("Conflicting modifiers ABSTRACT and FINAL");
-        }
+    public ClassBuilder<?> buildClass(JvmClass className, Traversable<Mod> modifiers) {
         if (className.classKind().isInterface()) {
             throw new IllegalArgumentException(className + " is an interface");
         }
         return new ClassBuilderImpl<>(options, modifiers, className);
+    }
+
+    /**
+     * Returns a builder to build a class with given name.
+     * This is a variadic overload for
+     * {@link #buildClass(me.sbasalaev.tybyco.descriptors.JvmClass, me.sbasalaev.collection.Set) }.
+     *
+     * @param className  the class name.
+     * @param modifiers class modifiers among {@link Mod#ABSTRACT},
+     *     {@link Mod#DEPRECATED}, {@link Mod#FINAL}, {@link Mod#PUBLIC}
+     *     and {@link Mod#SYNTHETIC}.
+     */
+    public ClassBuilder<?> buildClass(JvmClass className, Mod... modifiers) {
+        return buildClass(className, list(modifiers));
     }
 
     /** Builder of Tybyco settings. */
