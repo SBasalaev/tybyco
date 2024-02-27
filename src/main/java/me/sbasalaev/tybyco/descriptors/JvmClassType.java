@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 package me.sbasalaev.tybyco.descriptors;
 
 import java.util.Objects;
+import static me.sbasalaev.API.append;
 import static me.sbasalaev.API.none;
 import static me.sbasalaev.API.some;
 import me.sbasalaev.Opt;
@@ -160,6 +161,12 @@ public final class JvmClassType extends JvmClassOrArrayType {
         return annotations().nonEmpty()
             || typeArguments.exists(JvmAnnotated::isDeeplyAnnotated)
             || enclosing.exists(JvmAnnotated::isDeeplyAnnotated);
+    }
+
+    @Override
+    public JvmClassType annotated(JvmAnnotation anno) {
+        return new JvmClassType(enclosing, className, typeArguments,
+            append(annotations(), anno));
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,9 @@ public sealed interface JvmAnnotated permits JvmTypeArgument, JvmTypeOrVoid, Jvm
 
     /** This type with all the annotations removed. */
     JvmAnnotated unannotated();
+
+    /** This type with the given annotation added. */
+    JvmAnnotated annotated(JvmAnnotation anno);
 
     /**
      * Whether this type or its components have any annotations.

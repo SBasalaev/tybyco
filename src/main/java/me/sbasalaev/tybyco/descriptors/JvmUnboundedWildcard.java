@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
  */
 package me.sbasalaev.tybyco.descriptors;
 
+import static me.sbasalaev.API.append;
 import me.sbasalaev.collection.List;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -44,6 +45,11 @@ public final class JvmUnboundedWildcard extends JvmWildcard {
     @Override
     public boolean isDeeplyAnnotated() {
         return annotations().nonEmpty();
+    }
+
+    @Override
+    public JvmUnboundedWildcard annotated(JvmAnnotation anno) {
+        return new JvmUnboundedWildcard(append(annotations(), anno));
     }
 
     @Override

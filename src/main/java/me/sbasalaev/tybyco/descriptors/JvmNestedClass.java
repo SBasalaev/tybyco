@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Sergey Basalaev
+ * Copyright 2023-2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,9 +37,9 @@ import me.sbasalaev.collection.Traversable;
  * <p>
  * To make a reference for a nested class first make a reference to its
  * enclosing class and then call the appropriate
- * {@link #buildMember(me.sbasalaev.tybyco.descriptors.ClassKind, java.lang.String) buildMember()},
- * {@link #buildLocal(me.sbasalaev.tybyco.descriptors.ClassKind, int, java.lang.String) buildLocal()}
- * or {@link #buildAnonymous(me.sbasalaev.tybyco.descriptors.ClassKind, int) buildAnonymous()}.
+ * {@link #newMember(me.sbasalaev.tybyco.descriptors.ClassKind, java.lang.String, me.sbasalaev.tybyco.descriptors.Mod...) newMember()},
+ * {@link #newLocal(me.sbasalaev.tybyco.descriptors.ClassKind, int, java.lang.String, me.sbasalaev.tybyco.descriptors.Mod...) newLocal()}
+ * or {@link #newAnonymous(me.sbasalaev.tybyco.descriptors.ClassKind, int, me.sbasalaev.tybyco.descriptors.Mod...) newAnonymous()}.
  *
  * @author Sergey Basalaev
  * @see <a href="https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html#jvms-4.7.6">JVMS 4.7.6 The {@code InnerClasses} Attribute</a>
