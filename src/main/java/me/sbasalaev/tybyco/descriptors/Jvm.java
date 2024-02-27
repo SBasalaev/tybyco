@@ -193,7 +193,8 @@ public final class Jvm {
     /**
      * Class or interface reference corresponding to given runtime class.
      *
-     * @param qualifiedName qualified name of the class, using dots as delimiters.
+     * @param runtimeClass the {@code Class} instance.
+     *        Must not be an array or or a primitive class.
      */
     public static JvmClass CLASS(Class<?> runtimeClass) {
         return JvmClass.of(runtimeClass);

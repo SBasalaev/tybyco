@@ -114,7 +114,7 @@ public final class Tybyco {
      * Returns a builder to build an interface or an annotation with given name.
      * The {@link Mod#ABSTRACT} modifier may be skipped and will be added automatically.
      * This is a variadic overload for
-     * {@link #buildInterface(me.sbasalaev.tybyco.descriptors.JvmClass, me.sbasalaev.collection.Set) }.
+     * {@link #buildInterface(me.sbasalaev.tybyco.descriptors.JvmClass, me.sbasalaev.collection.Traversable) }.
      *
      * @param interfaceName  the interface name.
      * @param modifiers interface modifiers among {@link Mod#PUBLIC},
@@ -142,7 +142,7 @@ public final class Tybyco {
     /**
      * Returns a builder to build a class with given name.
      * This is a variadic overload for
-     * {@link #buildClass(me.sbasalaev.tybyco.descriptors.JvmClass, me.sbasalaev.collection.Set) }.
+     * {@link #buildClass(me.sbasalaev.tybyco.descriptors.JvmClass, me.sbasalaev.collection.Traversable) }.
      *
      * @param className  the class name.
      * @param modifiers class modifiers among {@link Mod#ABSTRACT},

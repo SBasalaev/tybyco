@@ -138,7 +138,7 @@ public final class JvmMethodHandle {
     /**
      * Descriptor of the referenced member.
      * Returns {@link JvmType} if this is a handle to a field,
-     * {@link JvmMethodType} if this is a handle to a method or constructor.
+     * {@link JvmMethodDescriptor } if this is a handle to a method or constructor.
      */
     public JvmDescriptor descriptor() {
         return this.descriptor;

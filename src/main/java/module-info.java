@@ -25,11 +25,6 @@
 /**
  * Typesafe generator of Java bytecode.
  * This library allows to programmatically generate JVM class files.
- * It is not as fast and flexible
- * as <a href="https://asm.ow2.io/">Objectweb ASM</a>
- * or <a href="https://commons.apache.org/proper/commons-bcel/">Apache BCEL</a>
- * but instead aims to simplify the creation of class files by automating some
- * of the most routine tasks.
  */
 module me.sbasalaev.tybyco {
     requires transitive me.sbasalaev.common;

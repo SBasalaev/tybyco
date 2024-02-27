@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023-2024 Sergey Basalaev
+ * Copyright 2024 Sergey Basalaev
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,5 @@
  * THE SOFTWARE.
  */
 
-/**
- * Descriptors for Java classes, types and methods.
- * All descriptors are immutable, may be shared and may be keys in the hashtable.
- * Most of descriptor classes start with {@code Jvm} to avoid clashes with existing
- * Java classes. Static imports from {@link Jvm} class may be used for brevity.
- */
-package me.sbasalaev.tybyco.descriptors;
+/** {@link me.sbasalaev.tybyco.Tybyco } is a main entry point to build a class file. */
+package me.sbasalaev.tybyco;

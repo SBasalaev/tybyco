@@ -33,14 +33,16 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Builder of a code block of a method or constructor.
- * <h3>Stack checks</h3>
- * The builder checks that the values on stack are at least of correct
+ * <h2>Stack checks</h2>
+ * The builder checks that the values on stack are at least of a correct
  * {@link TypeKind}. In doing so it even distinguishes between {@code boolean},
- * {@code byte}, {@code char}, {@code short} and {@code int}. To convert between
- * numeric types you may use
- * {@link #numericCast(me.sbasalaev.tybyco.descriptors.TypeKind) numericCast()}.
+ * {@code byte}, {@code char}, {@code short} and {@code int}. The numeric types
+ * {@code byte}, {@code char} and {@code short} are widened to {@code int} as
+ * needed but the narrowing conversion must be explicit. To convert between
+ * numeric types use
+ * {@link #numericCast(me.sbasalaev.tybyco.descriptors.JvmPrimitiveType) numericCast()}.
  * There is no conversion between an {@code int} and a {@code boolean}.
- * <h3>invokespecial and invokeinterface</h3>
+ * <h2>invokespecial and invokeinterface</h2>
  * There are no matching methods for {@code invokespecial} and {@code invokeinterface}
  * instructions. Instead, the correct instruction is selected based on a class
  * reference, target Java version and the intention:
@@ -208,6 +210,7 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
      * Writes an instruction that pushes literal value on the stack.
      * The type of the value depends on the type of the object received.
      * <table border="1">
+     * <caption>Allowed types</caption>
      * <tr>
      * <th>Given object</th>
      * <th>Pushed value</th>
@@ -342,7 +345,7 @@ public interface CodeBlockBuilder<Result> extends CodeBuilder<Result> {
     /**
      * Writes instructions to allocate new object and immediately duplicate it.
      *
-     * @param classType type of the allocated object.
+     * @param className class of the allocated object.
      */
     CodeBlockBuilder<Result> newInstanceAndDup(JvmClass className);
 

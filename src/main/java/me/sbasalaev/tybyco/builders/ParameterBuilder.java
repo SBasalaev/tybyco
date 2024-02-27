@@ -26,7 +26,6 @@ package me.sbasalaev.tybyco.builders;
 /**
  * Builder for annotations of a formal parameter of a method or a constructor.
  *
- * @param <Self>   type of this builder.
  * @param <Result> type of the result produced by this builder.
  * @author Sergey Basalaev
  */

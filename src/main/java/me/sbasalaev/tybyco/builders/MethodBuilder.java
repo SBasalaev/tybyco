@@ -72,7 +72,7 @@ public interface MethodBuilder<Result>
      *     names of method parameters that will be assigned to local variables.
      *     Their number must match number of types in the method descriptor.
      *     The names may differ from the ones given in
-     *     {@link #parameter(me.sbasalaev.collection.Set, java.lang.String) parameter()}
+     *     {@link #parameter(java.lang.String, me.sbasalaev.tybyco.descriptors.Mod...) parameter()}
      *     method and may be empty strings if the corresponding local is to
      *     remain anonymous.
      */
@@ -85,7 +85,7 @@ public interface MethodBuilder<Result>
      *     names of method parameters that will be assigned to local variables.
      *     Their number must match number of types in the method descriptor.
      *     The names may differ from the ones given in
-     *     {@link #parameter(me.sbasalaev.collection.Set, java.lang.String) parameter()}
+     *     {@link #parameter(java.lang.String, me.sbasalaev.tybyco.descriptors.Mod...) parameter()}
      *     method and may be empty strings if the corresponding local is to
      *     remain anonymous.
      */

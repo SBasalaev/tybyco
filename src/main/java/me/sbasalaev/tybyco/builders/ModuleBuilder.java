@@ -138,7 +138,7 @@ public interface ModuleBuilder extends ClassfileBuilder<ModuleBuilder> {
      * Adds provides directive.
      *
      * @param serviceClass service provider class.
-     * @param firstImpl  implementation classes, the list must have at least one entry.
+     * @param implementations  implementation classes, the list must have at least one entry.
      *
      * @return this builder.
      */
